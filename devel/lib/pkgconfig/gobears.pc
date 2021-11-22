@@ -1,0 +1,8 @@
+prefix=/home/cc/ee106a/fl21/class/ee106a-age/GOBEARS/devel
+
+Name: gobears
+Description: Description of gobears
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

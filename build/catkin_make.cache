@@ -1,0 +1,2 @@
+gobears
+-DCATKIN_DEVEL_PREFIX=/home/cc/ee106a/fl21/class/ee106a-age/GOBEARS/devel -DCMAKE_INSTALL_PREFIX=/home/cc/ee106a/fl21/class/ee106a-age/GOBEARS/install -G Unix Makefiles
