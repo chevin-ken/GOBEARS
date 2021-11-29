@@ -1,27 +1,29 @@
 import rospy
 import sys
 
-def gobears():
-	#Initialize dig client
+from baxter import * 
 
-	#While not dig done: call dig callback on time interval until done.
-	#If failure, terminate, but if success, continue
+class GoBears():
+	def __init__(self):
+		self.baxter = Baxter()
 
-	#Initialize plant client
+	def dig(self):
+		return
+	def plant(self):
+		return
+	def fill(self):
+		return
+	def water(self):
+		return
 
-	#While not plant done: call plant callback on time interval until done.
-	#If failure, terminate, but if success, continue
-
-
-	#Initialize fill client
-
-	#While not fill done: call fill callback on time interval until done.
-	#If failure, terminate, but if success, continue
-
-	#Initialize water client
-
-	#While not water done: call plant callback on time interval until done.
-	
-def main():
-	rospy.init_node('gobears')
-	gobears()
+def __main__():
+	gobears = GoBears()
+	print("GoBears")
+	gobears.dig()
+	print("Finished digging, now planting")
+	gobears.plant()
+	print("Finished planting now filling")
+	gobears.fill()
+	print("Finished filling now watering")
+	gobears.water()
+	print("All done!")
