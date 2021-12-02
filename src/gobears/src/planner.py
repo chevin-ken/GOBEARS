@@ -1,3 +1,9 @@
+import sys
+import rospy
+import moveit_commander
+from moveit_msgs.msg import OrientationConstraint, Constraints, CollisionObject
+from geometry_msgs.msg import PoseStamped
+from shape_msgs.msg import SolidPrimitive
 class PathPlanner(object):
     """
     Path Planning Functionality for Baxter/Sawyer
@@ -50,7 +56,8 @@ class PathPlanner(object):
         self._group.set_workspace([-2, -2, -2, 2, 2, 2])
 
         # Sleep for a bit to ensure that all inititialization has finished
-        rospy.sleep(0.5)        self._group = moveit_commander.MoveGroupCommander(group_name)
+        rospy.sleep(0.5)
+        self._group = moveit_commander.MoveGroupCommander(group_name)
 
 
     def shutdown(self):

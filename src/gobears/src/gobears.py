@@ -1,5 +1,7 @@
+#!/usr/bin/env python
 import rospy
 import sys
+import cv2
 
 from baxter import * 
 
@@ -8,7 +10,10 @@ class GoBears():
 		self.baxter = Baxter()
 
 	def dig(self):
-		return
+		image = self.baxter.get_image()
+		print(type(image))
+		cv2.imshow("", image)
+		cv2.waitKey(0)
 	def plant(self):
 		return
 	def fill(self):
@@ -16,7 +21,8 @@ class GoBears():
 	def water(self):
 		return
 
-def __main__():
+if __name__ == '__main__':
+	print('did it reach main')
 	gobears = GoBears()
 	print("GoBears")
 	gobears.dig()
