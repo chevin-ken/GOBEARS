@@ -5,26 +5,46 @@ import cv2
 
 from baxter import * 
 
+
+TROWEL_AR_TAG_ID = 2
+
 class GoBears():
 	def __init__(self):
 		self.baxter = Baxter()
 
+	def test(self):
+		ar_pose = self.baxter.get_ar_pose(0)
+		orientation_constraints = []
+		self.baxter.execute(ar_pose, orientation_constraints)	
+
 	def dig(self):
-		image = self.baxter.get_image()
-		print(type(image))
-		cv2.imshow("", image)
-		cv2.waitKey(0)
+		#Step 1: detect trowel
+		trowel_ar_pose = self.baxter.get_ar_pose(TROWEL_AR_TAG_ID)
+
+		#Step 2: compute desired relative final pose with respect to ar tag pose
+		trowel_pose = trowel_ar_pose
+
+		#Step 3: Move to pose with orientation constraints
+		orientation_constraints = []
+		# baxter.execute(trowel_pose, orientation_constraints)
+
+		#Step 4: Close gripper to pick up plant
+
+
 	def plant(self):
 		return
+
 	def fill(self):
 		return
+
 	def water(self):
 		return
 
 if __name__ == '__main__':
-	print('did it reach main')
 	gobears = GoBears()
 	print("GoBears")
+	gobears.test()
+	print("Test ended")
 	gobears.dig()
 	print("Finished digging, now planting")
 	gobears.plant()

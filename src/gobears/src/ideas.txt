@@ -1,0 +1,67 @@
+sensing
+	- cameras need to see AR tags
+		- base
+		- 2 corners of the "garden" space
+		- trowel
+		- watering can
+		- plant
+	- input = ar tag name
+	- output = pose?
+
+planning
+	- be given 2 poses, start and goal, figure out the trajectory to move the effector from start to goal
+	- start.planner.py
+
+actuation
+	- actually moves the arms to the desired pose
+	- opens/closes the gripper
+	- baxter.py interfaces with all of the baxter's action components 
+
+
+
+
+baxter
+	- responsible for moving the arm and other components
+
+gobears
+	- main runner
+	- issues commands to execute dig, water, etc
+
+planner
+	- purely for the purpose of calculating the trajectory from one end effector pose to another
+
+vision
+	- used for requesting poses of specific AR tag names
+
+
+
+
+know pose of arm when at base (fixxed height above)
+get trowel = 
+	- return location/pose of trowel AR tag relative to base (vision)
+	- calculate position of hand necessary to pick up trowel (gobears)
+	- get the trajectory plan to move hand from current pose to pose above trowel (planning)
+	- execute trajectory to move hand from current pose to pose above trowel (actuation)
+	- descend and grip (actuation)
+		- not sure how to enfore orientation of the gripper to grip a trowel vs grip a cup
+	- lift (actuation)
+	- caculate position of hand necessary to hover over dig site (vision)
+	- get trajectory plan to move hand fcrom current pose to pose above dig site (planning)
+
+
+pick and place example
+https://www.ugr.es/~cvrlab/project/baxter_objectmanipulation/
+	https://github.com/patilnabhi/baxter_two
+
+
+using AR tags
+https://piazza.com/class_profile/get_resource/hysvddrwjpvg5/i252vexju0u5tb
+
+using cameras
+https://web.ics.purdue.edu/~rvoyles/Classes/ROSprogramming/Using_Baxter_Cameras.pdf
+
+wait for message
+https://stackoverflow.com/questions/68719879/how-to-use-rospy-wait-for-message
+
+intro to baxter general
+https://nu-msr.github.io/me495_site/lecture13_rethink.html

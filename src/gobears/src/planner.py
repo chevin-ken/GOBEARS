@@ -30,7 +30,6 @@ class PathPlanner(object):
             For Baxter, this would be 'left_arm' or 'right_arm'
             For Sawyer, this would be 'right_arm'
         """
-
         # If the node is shutdown, call this function    
         rospy.on_shutdown(self.shutdown)
 
@@ -56,8 +55,7 @@ class PathPlanner(object):
         self._group.set_workspace([-2, -2, -2, 2, 2, 2])
 
         # Sleep for a bit to ensure that all inititialization has finished
-        rospy.sleep(0.5)
-        self._group = moveit_commander.MoveGroupCommander(group_name)
+        rospy.sleep(2.0)
 
 
     def shutdown(self):
@@ -80,7 +78,6 @@ class PathPlanner(object):
         Outputs:
         path: A moveit_msgs/RobotTrajectory path
         """
-
         self._group.set_pose_target(target)
         self._group.set_start_state_to_current_state()
 
