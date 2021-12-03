@@ -47,8 +47,8 @@ class Baxter:
         while(self.ar_marker_positions == None):
             continue
         #Initialize path planner for left arm
-        self.planner = PathPlanner("left_arm")
-
+        self.left_planner = PathPlanner("left_arm")
+        self.right_planner = PathPlanner("right_arm")
         self.bridge = cv_bridge.CvBridge()
         print("Finished init")
 
@@ -62,12 +62,32 @@ class Baxter:
         #Get pose of ar_tag with respect to base frame
         return self.ar_marker_positions[ar_tag_id]
 
+    def close_gripper():
+        return
+
+    def release_gripper():
+        return
+
+    def scoop():
+        return
+
+    def pour():
+        return
+
+    def reset():
+        return
+        
     # def detect_color_object(self, color):  
     #     head_point, hand_point = self.detector.detect(color)
     #     head_pose = self.get_head_orientation()
     #     hand_pose = self.get_hand_orientation()
     #     return self.calculate_world_frame_coordinates(head_point, head_pose, hand_point, hand_pose)
 
-    def execute(self, target, orientation_constraints):
-        plan = self.planner.plan_to_pose(target, orientation_constraints)
-        return self.planner.execute_plan(plan)
+    def execute(self, target, orientation_constraints, arm):
+        if arm == "left":
+            plan = self.left_planner.plan_to_pose(target, orientation_constraints)
+            return self.left_planner.execute_plan(plan)
+        plan = self.right_planner.plan_to_pose(target, orientation_constraints)
+        return self.right_planner.execute_plan(plan)
+        
+        
