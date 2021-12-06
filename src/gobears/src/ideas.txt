@@ -65,3 +65,7 @@ https://stackoverflow.com/questions/68719879/how-to-use-rospy-wait-for-message
 
 intro to baxter general
 https://nu-msr.github.io/me495_site/lecture13_rethink.html
+
+rosrun baxtertools cameracontrol.py -o righthandcamera -r 1280x800
+
+
