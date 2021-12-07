@@ -52,6 +52,17 @@ get trowel =
 pick and place example
 https://www.ugr.es/~cvrlab/project/baxter_objectmanipulation/
 	https://github.com/patilnabhi/baxter_two
+	
+	
+AR tags:
+large (for table): 4.5 cm
+small (for tools): 1.9 cm
+
+Stretch goal:
+once we know how to do all of the motions given the poses of the tools/objects we are interacting with (using ar tags on tools/objects), use more advanced computer vision to detect objects:
+add color markers (ie duct tape) of different colors onto objects
+use ar tags on four corners of working space to define homography; rectify this part of the image, then use color to detect x y position within the working space (we already know z based on the zs of the ar tags/ height of the table)
+
 
 
 using AR tags
@@ -67,5 +78,10 @@ intro to baxter general
 https://nu-msr.github.io/me495_site/lecture13_rethink.html
 
 rosrun baxtertools cameracontrol.py -o righthandcamera -r 1280x800
+
+Run rosrun baxter_interface joint_trajectory_action_server.py
+Run roslaunch baxter_moveit_config baxter_grippers.launch
+Run ar_track_alvar.launch
+
 
 
