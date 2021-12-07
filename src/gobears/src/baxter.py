@@ -39,7 +39,17 @@ G_AL_FINAL = np.array([[ 0.04773602,  0.99882483,  0.00838042,  0.00168912],
  [ 0.,          0. ,         0.,          1.        ]]
 )
 
+G_AL_PLANT_HOVER = np.array([[ -0.14550063,  -0.97322132,  -0.17796016,  -0.13693422],
+ [ -0.9893473, 0.14396863,  0.0215628, 0.06014289],
+ [ 0.0046353, 0.17920181 ,-0.98380142, 0.30677438],
+ [ 0.,          0. ,         0.,          1.        ]]
+)
 
+G_AL_PLANT = np.array([[ -0.14550063,  -0.97322132,  -0.17796016,  -0.13693422],
+ [ -0.9893473, 0.14396863,  0.0215628, 0.06014289],
+ [ 0.0046353, 0.17920181 ,-0.98380142, 0.30677438],
+ [ 0.,          0. ,         0.,          1.        ]]
+)
 
 def open_cam(camera, res):
     # Check if valid resolution
@@ -57,7 +67,7 @@ def close_cam(camera):
     cam.close() # close
 
 # AR_MARKER_LIST = [0, 1, 2, 3, 4]
-AR_MARKER_LIST = [0, 1, 2]
+AR_MARKER_LIST = [0, 1, 2, 3]
 
 def get_r_from_quaternion(quaternion):
     quaternion = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
@@ -110,31 +120,22 @@ class Baxter:
         self.image = image
 
     def ar_pose_callback(self, alvar_markers):
-        if self.ar_marker_positions == None:
-            done = False
-            self.ar_marker_positions = [0] * len(AR_MARKER_LIST)
-            seen = set()
-            check = set(AR_MARKER_LIST)
-            while not done:
-                for marker in alvar_markers.markers:
-                    marker_id = marker.id
-                    pose = marker.pose.pose
-                    self.ar_marker_positions[marker_id] = pose
-                    seen.add(marker_id)
-                if seen == check:
-                    done = True
-            print("Done retrieving initial ar tag positions")
+        for marker in alvar_markers.markers:
+            marker_id = marker.id
+            if self.ar_marker_positions[marker_id] == 0:
+                pose = marker.pose.pose 
+                self.ar_marker_positions[marker_id] = pose
 
     def setup_left_hand_camera(self):
         pose = PoseStamped()
         pose.header.frame_id = "base"
-        pose.pose.position.x = 0.595
-        pose.pose.position.y = 0.133
-        pose.pose.position.z = -0.086
-        pose.pose.orientation.x = 0.996
-        pose.pose.orientation.y = 0.067
-        pose.pose.orientation.z = -0.025
-        pose.pose.orientation.w = -0.046
+        pose.pose.position.x = 0.737
+        pose.pose.position.y = 0.219
+        pose.pose.position.z = 0.107
+        pose.pose.orientation.x = 0
+        pose.pose.orientation.y = 1
+        pose.pose.orientation.z = 0
+        pose.pose.orientation.w = 0
         orientation_constraints = []
         plan = self.plan(pose, orientation_constraints, "left")
         raw_input("Press <Enter> to move the camera to initial pose: ")
@@ -142,7 +143,7 @@ class Baxter:
 
     def __init__(self):
         self.image = None
-        self.ar_marker_positions = None
+        self.ar_marker_positions = [0] * len(AR_MARKER_LIST)
 
         self.left_planner = PathPlanner("left_arm")
         self.right_planner = PathPlanner("right_arm")
@@ -157,13 +158,12 @@ class Baxter:
         rospy.Subscriber('/ar_pose_marker', AlvarMarkers, self.ar_pose_callback)
         while(self.ar_marker_positions == None):
             continue
-        print(self.ar_marker_positions)
         self.left_gripper = robot_gripper.Gripper('left')
         self.left_gripper.calibrate()
         rospy.sleep(2.0)
-        self.left_gripper.close()
         self.left_gripper.open()
-        rospy.sleep(1.0)
+        # self.left_gripper.open()
+        # rospy.sleep(1.0)
 
         self.bridge = cv_bridge.CvBridge()
         print("Finished init")
@@ -178,11 +178,11 @@ class Baxter:
         #Get pose of ar_tag with respect to base frame
         return self.ar_marker_positions[ar_tag_id]
 
-    def close_gripper():
-        return
+    def close_gripper(self):
+        self.left_gripper.close()
 
-    def release_gripper():
-        return
+    def open_gripper():
+        self.left_gripper.open()
 
     def scoop():
         return
@@ -220,12 +220,12 @@ class Baxter:
         tfBuffer = tf2_ros.Buffer()
         tfListener = tf2_ros.TransformListener(tfBuffer)
         # tfListener.waitForTransform(target_frame, source_frame, rospy.Time(), rospy.Duration(4.0))
+        # trans = tfBuffer.lookup_transform(target_frame, source_frame, rospy.Time())
         r = rospy.Rate(10) # 10hz
         done = False
         trans = None
         while not rospy.is_shutdown() and not done:
             try:
-                
                 trans = tfBuffer.lookup_transform(target_frame, source_frame, rospy.Time())
                 done = True
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
@@ -258,6 +258,9 @@ class Baxter:
         target_pose.position = target_trans.translation
         current_orientation = target_pose.orientation
         target_pose.position.z = target_pose.position.z + up_amount
+        target_pose_stamped = PoseStamped()
+        target_pose_stamped.header.frame_id = "base"
+        target_pose_stamped.pose = target_pose
         # orientation_constraint = OrientationConstraint()
         # orientation_constraint.link_name = "left_gripper"
         # orientation_constraint.header.frame_id = "base"
@@ -265,7 +268,7 @@ class Baxter:
         # orientation_constraint.absolute_x_axis_tolerance = .05
         # orientation_constraint.absolute_y_axis_tolerance = .05
         # orientation_constraint.absolute_z_axis_tolerance = .05
-        return self.plan(target_pose, [], "left")
+        return self.plan(target_pose_stamped, [], "left")
 
     def move_to_drop_off(self):
         return
@@ -273,15 +276,12 @@ class Baxter:
         # target_pose = get_pose_from_ar_tag(deposit_ar_tag)
         # orientation_constraint = current_orientation
         # move(curr_pose, target_pose)
-
-
-
             
-    def test():
-        b = Baxter()
-        gripper_to_tag = b.lookup_transform("ar_marker_2", "left_gripper")
+    def test(self):
+        print("Test")
+        gripper_to_tag = self.lookup_transform("ar_marker_3", "left_gripper")
         g_al = make_homog_from_transform(gripper_to_tag.transform)
-        print(g_al)
+        print("GAL: ", g_al)
         return
 
 
