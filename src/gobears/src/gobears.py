@@ -2,6 +2,7 @@
 import rospy
 import sys
 import cv2
+from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
 from baxter import * 
 from geometry_msgs.msg import PoseStamped, Pose
@@ -22,6 +23,7 @@ class GoBears():
 
 	def test(self):
 		ar_pose = self.baxter.get_ar_pose(0)
+		print(type(ar_pose))
 		
 		ar_pose.position.z += 0.2
 		ar_pose.orientation.x = 0.0
@@ -34,7 +36,32 @@ class GoBears():
 		plan = self.baxter.plan(ar_pose, orientation_constraints, "left")
 		print(plan)
 		raw_input("Press <Enter> to move the left arm to goal pose 1: ")
-		self.baxter.execute(plan, "left")	
+		self.baxter.execute(plan, "left")
+
+	def test2(self):	
+		left_gripper_pose = gobears.baxter.lookup_transform('base', 'left_gripper')
+		travel_pose = Pose()
+		travel_pose.orientation = left_gripper_pose.transform.rotation
+		travel_pose.position = left_gripper_pose.transform.translation
+		initial_quaternions = [travel_pose.orientation.x, travel_pose.orientation.y, travel_pose.orientation.z, travel_pose.orientation.w]
+		initial_euler = list(euler_from_quaternion(initial_quaternions))
+		print(initial_euler)
+		goal_euler = initial_euler
+		goal_euler[1] += .5
+
+		goal_quaternion = quaternion_from_euler(goal_euler[0], goal_euler[1], goal_euler[2])
+		travel_pose.orientation.x = goal_quaternion[0]
+		travel_pose.orientation.y = goal_quaternion[1]
+		travel_pose.orientation.z = goal_quaternion[2]
+		travel_pose.orientation.w = goal_quaternion[3]
+		# goal_euler = initial_euler[1]
+		# # print(type(left_gripper_pose))
+		orientation_constraints = []
+		plan = self.baxter.plan(travel_pose, orientation_constraints, "left")
+		print(plan)
+		raw_input("Press <Enter> to move the left arm to goal pose 1: ")
+		self.baxter.execute(plan, "left")
+
 
 	def dig(self):
 		#Detect trowel
@@ -157,7 +184,8 @@ class GoBears():
 if __name__ == '__main__':
 	gobears = GoBears()
 	print("GoBears")
-	gobears.test()
+	# gobears.test()
+	gobears.test2()
 	print("Test ended")
 	# gobears.dig()
 	# print("Finished digging, now planting")

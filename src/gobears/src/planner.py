@@ -98,3 +98,6 @@ class PathPlanner(object):
         """
 
         return self._group.execute(plan, True)
+
+    def get_current_pose(self):
+        return self._group.get_current_pose()

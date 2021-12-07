@@ -6,6 +6,7 @@ from baxter_interface.camera import CameraController
 from baxter_interface import Limb
 from baxter_interface import gripper as robot_gripper
 from geometry_msgs.msg import PoseStamped, Pose
+import tf2_ros
 
 # Open camera(camera is a string and res is a2-elementvector)
 
@@ -25,7 +26,7 @@ def close_cam(camera):
     cam.close() # close
 
 # AR_MARKER_LIST = [0, 1, 2, 3, 4]
-AR_MARKER_LIST = [0]
+AR_MARKER_LIST = [0, 1, 2]
 
 class Baxter:
     def camera_callback(self, image):
@@ -83,6 +84,7 @@ class Baxter:
         self.left_gripper.calibrate()
         rospy.sleep(2.0)
         self.left_gripper.close()
+        self.left_gripper.open()
         rospy.sleep(1.0)
 
         self.bridge = cv_bridge.CvBridge()
@@ -92,7 +94,7 @@ class Baxter:
         return self.bridge.imgmsg_to_cv2(self.image, desired_encoding="passthrough")
 
     def get_left_hand_orientation(self):
-        return None
+        return self.left_planner.get_current_pose()
 
     def get_ar_pose(self, ar_tag_id):
         #Get pose of ar_tag with respect to base frame
@@ -129,5 +131,24 @@ class Baxter:
             return self.left_planner.execute_plan(plan)
         else:
             return self.right_planner.execute_plan(plan)
+
+    def lookup_transform(self, target_frame, source_frame):
+
+        tfBuffer = tf2_ros.Buffer()
+        tfListener = tf2_ros.TransformListener(tfBuffer)
+        # tfListener.waitForTransform(target_frame, source_frame, rospy.Time(), rospy.Duration(4.0))
+        r = rospy.Rate(10) # 10hz
+        done = False
+        trans = None
+        while not rospy.is_shutdown() and not done:
+            try:
+                
+                trans = tfBuffer.lookup_transform(target_frame, source_frame, rospy.Time())
+                done = True
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+                print("Exception: {}".format(e))
+            r.sleep()
+
+        return trans
         
         
