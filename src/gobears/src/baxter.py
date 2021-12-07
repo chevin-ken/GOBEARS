@@ -5,10 +5,41 @@ from ar_track_alvar_msgs.msg import AlvarMarkers
 from baxter_interface.camera import CameraController
 from baxter_interface import Limb
 from baxter_interface import gripper as robot_gripper
-from geometry_msgs.msg import PoseStamped, Pose
+from geometry_msgs.msg import PoseStamped, Pose, TransformStamped, Transform, Quaternion
 import tf2_ros
+from tf.transformations import quaternion_from_euler, euler_from_quaternion
+from scipy.spatial.transform import Rotation as R
+import numpy as np
+from moveit_msgs.msg import Constraints, OrientationConstraint
 
 # Open camera(camera is a string and res is a2-elementvector)
+#g_al_setup: transform from ar tag to l gripper at setup stage, before descending
+# G_AL_SETUP = np.array([[ 0.00179543,  0.99388374,  0.11041685, -0.00250071],
+#  [ 0.98573788, -0.02033984,  0.16705428, -0.06594194],
+#  [ 0.16827839,  0.10854214, -0.97974537,  0.03593001],
+#  [ 0.,          0.,          0.,          1.        ]])
+
+
+G_AL_SETUP = np.array([[ 1.74885426e-02,  9.97841627e-01,  6.32948526e-02, -3.70693018e-04],
+ [ 9.82872667e-01, -2.87724216e-02,  1.82026011e-01, -4.03238486e-02],
+ [ 1.83454277e-01,  5.90274110e-02, -9.81254449e-01,  3.27414226e-02],
+ [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00, 1.00000000e+00]]
+)
+
+
+#g_al_final: transform from ar tag to l gripper at final config (about to close grip)
+# G_AL_FINAL = np.array([[-1.46622016e-02,  9.97445744e-01,  6.99071311e-02, -6.92087378e-05],
+#  [ 9.86086809e-01,  2.84643318e-03,  1.66206805e-01, -6.41808053e-02],
+#  [ 1.65583284e-01,  7.13714576e-02, -9.83609827e-01, -2.28385614e-02],
+#  [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  1.00000000e+00]])
+
+G_AL_FINAL = np.array([[ 0.04773602,  0.99882483,  0.00838042,  0.00168912],
+ [ 0.95533287, -0.04810397,  0.29159067, -0.05074548],
+ [ 0.29165113, -0.00591329 ,-0.95650648, -0.05208556],
+ [ 0.,          0. ,         0.,          1.        ]]
+)
+
+
 
 def open_cam(camera, res):
     # Check if valid resolution
@@ -27,6 +58,52 @@ def close_cam(camera):
 
 # AR_MARKER_LIST = [0, 1, 2, 3, 4]
 AR_MARKER_LIST = [0, 1, 2]
+
+def get_r_from_quaternion(quaternion):
+    quaternion = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
+    r = R.from_quat(quaternion)
+    return r
+
+def get_quaternion_from_r(r):
+    r_quat = r.as_quat()
+    quaternion = Quaternion()
+    quaternion.x = r_quat[0]
+    quaternion.y = r_quat[1]
+    quaternion.z = r_quat[2]
+    quaternion.w = r_quat[3]
+
+    return quaternion
+
+# takes in Transform object (not TransformStamped), returns 4x4 homogenous transform matrix
+def make_homog_from_transform(transform): 
+    quaternion = transform.rotation
+    translation = transform.translation
+    # rpy =  euler_from_quaternion(quaternion) #given in native TF API
+    quaternion = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
+    translation = [translation.x, translation.y, translation.z]
+    r = R.from_quat(quaternion)
+    rot_mat = r.as_dcm()
+
+    homog = np.zeros((4, 4))
+    homog[:3, :3] = np.array(rot_mat)
+    homog[3] = np.array([0, 0, 0, 1])
+    homog[:3, 3] = np.array(translation).T
+    return homog
+
+def get_pose_from_homog(g_ba, g_al):
+    g_bl = np.dot(g_ba, g_al)
+    pose = Pose()
+    r = R.from_dcm(g_bl[:3, :3])
+    quat = r.as_quat()
+    pose.orientation.x = quat[0]
+    pose.orientation.y = quat[1]
+    pose.orientation.z = quat[2]
+    pose.orientation.w = quat[3]
+    pose.position.x = g_bl[0][3]
+    pose.position.y = g_bl[1][3]
+    pose.position.z = g_bl[2][3]
+    return pose
+
 
 class Baxter:
     def camera_callback(self, image):
@@ -80,6 +157,7 @@ class Baxter:
         rospy.Subscriber('/ar_pose_marker', AlvarMarkers, self.ar_pose_callback)
         while(self.ar_marker_positions == None):
             continue
+        print(self.ar_marker_positions)
         self.left_gripper = robot_gripper.Gripper('left')
         self.left_gripper.calibrate()
         rospy.sleep(2.0)
@@ -93,8 +171,8 @@ class Baxter:
     def get_image(self):
         return self.bridge.imgmsg_to_cv2(self.image, desired_encoding="passthrough")
 
-    def get_left_hand_orientation(self):
-        return self.left_planner.get_current_pose()
+    def get_left_hand_pose(self):
+        return self.lookup_transform("base", "left_gripper").transform
 
     def get_ar_pose(self, ar_tag_id):
         #Get pose of ar_tag with respect to base frame
@@ -132,8 +210,13 @@ class Baxter:
         else:
             return self.right_planner.execute_plan(plan)
 
-    def lookup_transform(self, target_frame, source_frame):
 
+
+
+    #  TODO: refactor below (or any appropriate) functions to be in a separate file with tools
+    # returns TransformStamped object
+    def lookup_transform(self, target_frame, source_frame):
+        #TODO: aren't target and source frame names swapped?
         tfBuffer = tf2_ros.Buffer()
         tfListener = tf2_ros.TransformListener(tfBuffer)
         # tfListener.waitForTransform(target_frame, source_frame, rospy.Time(), rospy.Duration(4.0))
@@ -149,6 +232,59 @@ class Baxter:
                 print("Exception: {}".format(e))
             r.sleep()
 
-        return trans
-        
-        
+        return trans # of type TransformStamped
+
+    def move_forward(self, forward_amount):
+        target_trans = self.get_left_hand_pose()
+        target_pose = Pose()
+        target_pose.orientation = target_trans.rotation
+        target_pose.position = target_trans.translation
+        current_orientation = target_pose.orientation
+        target_pose.position.x = target_pose.position.x + forward_amount
+        orientation_constraint = OrientationConstraint()
+        orientation_constraint.link_name = "left_gripper"
+        orientation_constraint.header.frame_id = "base"
+        orientation_constraint.orientation = current_orientation
+        orientation_constraint.absolute_x_axis_tolerance = .05
+        orientation_constraint.absolute_y_axis_tolerance = .05
+        orientation_constraint.absolute_z_axis_tolerance = .05
+
+        return self.plan(target_pose, [orientation_constraint], "left")
+
+    def move_up(self, up_amount):
+        target_trans = self.get_left_hand_pose()
+        target_pose = Pose()
+        target_pose.orientation = target_trans.rotation
+        target_pose.position = target_trans.translation
+        current_orientation = target_pose.orientation
+        target_pose.position.z = target_pose.position.z + up_amount
+        # orientation_constraint = OrientationConstraint()
+        # orientation_constraint.link_name = "left_gripper"
+        # orientation_constraint.header.frame_id = "base"
+        # orientation_constraint.orientation = current_orientation
+        # orientation_constraint.absolute_x_axis_tolerance = .05
+        # orientation_constraint.absolute_y_axis_tolerance = .05
+        # orientation_constraint.absolute_z_axis_tolerance = .05
+        return self.plan(target_pose, [], "left")
+
+    def move_to_drop_off(self):
+        return
+        # curr_pose = get_current_pose()
+        # target_pose = get_pose_from_ar_tag(deposit_ar_tag)
+        # orientation_constraint = current_orientation
+        # move(curr_pose, target_pose)
+
+
+
+            
+    def test():
+        b = Baxter()
+        gripper_to_tag = b.lookup_transform("ar_marker_2", "left_gripper")
+        g_al = make_homog_from_transform(gripper_to_tag.transform)
+        print(g_al)
+        return
+
+
+
+if __name__ == '__main__':
+    test()

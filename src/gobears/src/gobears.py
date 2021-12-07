@@ -3,9 +3,11 @@ import rospy
 import sys
 import cv2
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
-
+import baxter
 from baxter import * 
 from geometry_msgs.msg import PoseStamped, Pose
+from scipy.spatial.transform import Rotation as R
+from moveit_msgs.msg import Constraints, OrientationConstraint
 
 TROWEL_AR_TAG_ID = 0
 HOLE_AR_TAG_ID = 1
@@ -62,6 +64,80 @@ class GoBears():
 		raw_input("Press <Enter> to move the left arm to goal pose 1: ")
 		self.baxter.execute(plan, "left")
 
+	# tests dig motion without tilting the trowel up/down yet
+	def test3(self):
+		tag_pose = self.baxter.get_ar_pose(2)
+		print(tag_pose)
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		trowel_pose = get_pose_from_homog(g_ba, baxter.G_AL_SETUP)
+
+		tilt_constraint = OrientationConstraint()
+		
+
+		tilt_constraint.orientation = trowel_pose.orientation
+		tilt_constraint.absolute_x_axis_tolerance = .05
+		tilt_constraint.absolute_y_axis_tolerance = 1.8
+		tilt_constraint.absolute_z_axis_tolerance = .05
+		orientation_constraints = [tilt_constraint]
+		trowel_plan = self.baxter.plan(trowel_pose, orientation_constraints, "left")
+		raw_input("Press <Enter> to move the left arm to trowel pose: ")
+		
+		#Try to enforce the success of the motion after having a plan
+		successful = False
+		while not successful:
+			try:
+				self.baxter.execute(trowel_plan, "left")
+				successful = True
+			except:
+				print("failed: retrying...")
+
+
+		r = get_r_from_quaternion(trowel_pose.orientation)
+		roll, pitch, yaw = r.as_euler('xyz', degrees = True)
+		pitch += 45
+		r = R.from_euler('xyz', [roll, pitch, yaw], degrees = True)
+		trowel_pose.orientation = get_quaternion_from_r(r)
+
+
+
+		orientation_constraints = []
+		# trowel_pose = get_pose_from_homog(g_ba, baxter.G_AL_FINAL)
+		trowel_plan = self.baxter.plan(trowel_pose, orientation_constraints, "left")
+		raw_input("Press <Enter> to move the left arm to trowel pose: ")
+		self.baxter.execute(trowel_plan, "left")
+
+		forward_plan = self.baxter.move_forward(.1)
+		raw_input("Press <Enter> to move the left arm to trowel pose: ")
+		self.baxter.execute(forward_plan, "left")
+
+		up_plan = self.baxter.move_up(.1)
+		raw_input("Press <Enter> to move the left arm to trowel pose: ")
+		self.baxter.execute(up_plan, "left")
+
+
+	# tests getting in position to pick up trowel
+	def test4(self):
+		tag_pose = self.baxter.get_ar_pose(2)
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		trowel_pose = get_pose_from_homog(g_ba, baxter.G_AL_SETUP)
+
+		orientation_constraints = []
+		trowel_plan = self.baxter.plan(trowel_pose, orientation_constraints, "left")
+		raw_input("Press <Enter> to move the left arm to trowel pose: ")
+		self.baxter.execute(trowel_plan, "left")
+
+		orientation_constraints = []
+		trowel_pose = get_pose_from_homog(g_ba, baxter.G_AL_FINAL)
+		trowel_plan = self.baxter.plan(trowel_pose, orientation_constraints, "left")
+		raw_input("Press <Enter> to move the left arm to trowel pose: ")
+		self.baxter.execute(trowel_plan, "left")
+
 
 	def dig(self):
 		#Detect trowel
@@ -100,6 +176,9 @@ class GoBears():
 
 			#Determine completion somehow
 			complete = True
+
+
+
 
 	# def plant(self):
 	# 	#Detect location of place to put trowel down
@@ -185,7 +264,7 @@ if __name__ == '__main__':
 	gobears = GoBears()
 	print("GoBears")
 	# gobears.test()
-	gobears.test2()
+	gobears.test3()
 	print("Test ended")
 	# gobears.dig()
 	# print("Finished digging, now planting")
