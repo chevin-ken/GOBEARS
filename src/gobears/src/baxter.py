@@ -30,11 +30,10 @@ RESET_POSE.pose.orientation.y = 1
 
 
 
-G_AL_SETUP = np.array([[ 1.74885426e-02,  9.97841627e-01,  6.32948526e-02, -3.70693018e-04],
- [ 9.82872667e-01, -2.87724216e-02,  1.82026011e-01, -4.03238486e-02],
- [ 1.83454277e-01,  5.90274110e-02, -9.81254449e-01,  3.27414226e-02],
- [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00, 1.00000000e+00]]
-)
+G_AL_SETUP = np.array([[-0.10662976,  0.99346368,  0.04074314, -0.00434937],
+       [ 0.95448143,  0.09079382,  0.28411562, -0.06516797],
+       [ 0.27855933,  0.06918375, -0.95792396,  0.03382742],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
 
 #g_al_final: transform from ar tag to l gripper at final config (about to close grip)
@@ -43,11 +42,10 @@ G_AL_SETUP = np.array([[ 1.74885426e-02,  9.97841627e-01,  6.32948526e-02, -3.70
 #  [ 1.65583284e-01,  7.13714576e-02, -9.83609827e-01, -2.28385614e-02],
 #  [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  1.00000000e+00]])
 
-G_AL_FINAL = np.array([[ 0.04773602,  0.99882483,  0.00838042,  0.00168912],
- [ 0.95533287, -0.04810397,  0.29159067, -0.05074548],
- [ 0.29165113, -0.00591329 ,-0.95650648, -0.05208556],
- [ 0.,          0. ,         0.,          1.        ]]
-)
+G_AL_FINAL = np.array([[-0.08564988,  0.99411818,  0.06628074, -0.00709231],
+       [ 0.95201656,  0.06204121,  0.29969209, -0.03753944],
+       [ 0.29381722,  0.08876895, -0.9517308 , -0.02664825],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
 G_AL_PLANT_HOVER = np.array([[ -0.14550063,  -0.97322132,  -0.17796016,  -0.13693422],
  [ -0.9893473, 0.14396863,  0.0215628, 0.06014289],
@@ -210,7 +208,7 @@ class Baxter:
         table_pose.header.frame_id = "base"
         table_pose.pose.position.x = 0.5
         table_pose.pose.position.y = 0.0
-        table_pose.pose.position.z = 0.0
+        table_pose.pose.position.z = -0.2
         table_pose.pose.orientation.x = 0.0
         table_pose.pose.orientation.y = 0.0
         table_pose.pose.orientation.z = 0.0
@@ -231,7 +229,7 @@ class Baxter:
 
         rospy.init_node('Baxter')
         self.remove_table_obstacle()
-        # self.setup_table_obstacle()
+        self.setup_table_obstacle()
 
         # rospy.Subscriber('cameras/left_hand_camera/image', Image, self.left_hand_camera_callback)
         rospy.Subscriber('cameras/right_hand_camera/image', Image, self.camera_callback)
@@ -267,6 +265,9 @@ class Baxter:
 
     def open_gripper(self):
         self.left_gripper.open()
+
+    def change_velocity(self, scaling_factor):
+        self.left_planner.change_velocity(scaling_factor)
 
     def scoop():
         return
@@ -376,7 +377,7 @@ class Baxter:
             
     def test(self):
         print("Test")
-        gripper_to_tag = self.lookup_transform("ar_marker_1", "left_gripper")
+        gripper_to_tag = self.lookup_transform("ar_marker_2", "left_gripper")
         g_al = make_homog_from_transform(gripper_to_tag.transform)
         print("GAL: ", g_al)
         return

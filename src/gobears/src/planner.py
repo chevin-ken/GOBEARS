@@ -59,7 +59,9 @@ class PathPlanner(object):
         # Sleep for a bit to ensure that all inititialization has finished
         rospy.sleep(2.0)
 
-
+    def change_velocity(self, scaling_factor):
+        self._group.set_max_velocity_scaling_factor(scaling_factor)
+        
     def shutdown(self):
         """
         Code to run on shutdown. This is good practice for safety

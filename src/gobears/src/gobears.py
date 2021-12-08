@@ -151,40 +151,43 @@ class GoBears():
 	def dig(self):
 		#Detect trowel
 		trowel_ar_pose = self.baxter.get_ar_pose(TROWEL_AR_TAG_ID)
+		self.baxter.change_velocity(1)
 
 		#Compute desired relative final pose with respect to ar tag pose
-		trowel_pose = trowel_ar_pose
-
-		#Move to pose with orientation constraints
 		orientation_constraints = []
-		trowel_plan = self.baxter.plan(trowel_pose, orientation_constraints, "left")
-		raw_input("Press <Enter> to move the left arm to trowel pose: ")
-		self.baxter.execute(trowel_plan, "left")
+		trowel_hover_pose = self.get_trowel_hover_pose(trowel_ar_pose)
+		self.baxter.move_to_pose(trowel_hover_pose, orientation_constraints, "left")
 
-		#Close gripper to pick up trowel
+
+		orientation_constraints = []
+		trowel_pick_pose = self.get_trowel_pick_pose(trowel_ar_pose)
+		self.baxter.move_to_pose(trowel_pick_pose, orientation_constraints, "left")
+
+
+
 		self.baxter.close_gripper()
 
-		#Dig Loop
-		complete = False
-		while not complete:
-			#Detect location of hole
-			hole_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
+		# #Dig Loop
+		# complete = False
+		# while not complete:
+		# 	#Detect location of hole
+		# 	hole_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
 
-			#Compute desired relative final pose with respect to hole pose
-			hole_pose = hole_ar_pose
+		# 	#Compute desired relative final pose with respect to hole pose
+		# 	hole_pose = hole_ar_pose
 
-			#Move to pose with orientation constraints
-			orientation_constraints = []
+		# 	#Move to pose with orientation constraints
+		# 	orientation_constraints = []
 
-			hole_plan = self.baxter.plan(hole_pose, orientation_constraints, "left")
-			raw_input("Press <Enter> to move the left arm to hole pose: ")
-			self.baxter.execute(hole_plan, "left")
+		# 	hole_plan = self.baxter.plan(hole_pose, orientation_constraints, "left")
+		# 	raw_input("Press <Enter> to move the left arm to hole pose: ")
+		# 	self.baxter.execute(hole_plan, "left")
 
-			#Execute scooping motion
-			self.baxter.scoop()
+		# 	#Execute scooping motion
+		# 	self.baxter.scoop()
 
-			#Determine completion somehow
-			complete = True
+		# 	#Determine completion somehow
+		# 	complete = True
 
 	def get_plant_hover_pose(self, plant_ar_pose):
 		# transform = Transform()
@@ -423,6 +426,33 @@ class GoBears():
 		watering_pose_stamped.header.frame_id = "base"
 		return watering_pose_stamped
 
+	def get_trowel_hover_pose(self, trowel_ar_pose):
+		tag_pose = trowel_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		pose = get_pose_from_homog(g_ba, baxter.G_AL_SETUP)
+
+		water_pose_stamped = PoseStamped()
+		water_pose_stamped.pose = pose
+		water_pose_stamped.header.frame_id = "base"
+		return water_pose_stamped
+
+	def get_trowel_pick_pose(self, trowel_ar_pose):
+		tag_pose = trowel_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		pose = get_pose_from_homog(g_ba, baxter.G_AL_FINAL)
+
+		water_pose_stamped = PoseStamped()
+		water_pose_stamped.pose = pose
+		water_pose_stamped.header.frame_id = "base"
+		return water_pose_stamped
+
+
 	def plant(self):
 		#Detect location of place to put trowel down
 		# trowel_ar_pose = self.baxter.get_ar_pose(TROWEL_AR_TAG_ID)
@@ -600,9 +630,9 @@ if __name__ == '__main__':
 	# gobears.test()
 	# gobears.test3()
 	# print("Test ended")
-	# gobears.dig()
+	gobears.dig()
 	# print("Finished digging, now planting")
-	gobears.plant()
+	# gobears.plant()
 	# print("Finished filling now watering")
-	gobears.water()
+	# gobears.water()
 	print("All done!")
