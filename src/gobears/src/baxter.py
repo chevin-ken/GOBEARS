@@ -20,6 +20,14 @@ from moveit_msgs.msg import Constraints, OrientationConstraint
 #  [ 0.98573788, -0.02033984,  0.16705428, -0.06594194],
 #  [ 0.16827839,  0.10854214, -0.97974537,  0.03593001],
 #  [ 0.,          0.,          0.,          1.        ]])
+RESET_POSE = PoseStamped()
+RESET_POSE.header.frame_id = "base" 
+RESET_POSE.pose.position.x = 0.539
+RESET_POSE.pose.position.y = 0.460
+RESET_POSE.pose.position.z = 0.075
+RESET_POSE.pose.orientation.y = 1
+
+
 
 
 G_AL_SETUP = np.array([[ 1.74885426e-02,  9.97841627e-01,  6.32948526e-02, -3.70693018e-04],
@@ -75,6 +83,34 @@ G_AL_WATER_BIN_WATER = np.array([[-0.96268888, -0.03020991, -0.26891909, -0.0516
        [-0.04542564,  0.99768853,  0.05053817,  0.08517795],
        [ 0.26677074,  0.06086836, -0.96183596,  0.20559746],
        [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
+G_AL_PLANT_HOVER = np.array([[ 0.00504796, -0.99884453, -0.04779254,  0.01810498],
+       [-0.99960864, -0.00372524, -0.02772508,  0.05309667],
+       [ 0.02751501,  0.04791379, -0.99847243,  0.09399243],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
+
+G_AL_PLANT_HOVER_2 = np.array([[-0.99624721, -0.08180927, -0.02826198,  0.05263162],
+       [-0.08085862,  0.99616962, -0.0332862 ,  0.06690625],
+       [ 0.03087685, -0.03087606, -0.99904619,  0.30490677],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
+
+G_AL_PLANT_PICK = np.array([[-3.94317501e-04, -9.99724926e-01,  2.34503050e-02,
+         1.55665657e-02],
+       [-9.98514304e-01, -8.84155649e-04, -5.44830485e-02,
+         5.34379820e-02],
+       [ 5.44887953e-02, -2.34369486e-02, -9.98239290e-01,
+         2.59223723e-02],
+       [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+         1.00000000e+00]])
+
+
+G_AL_PLANT_PLACE = np.array([[-0.99920738,  0.03322426, -0.02192644,  0.05750589],
+       [ 0.03354202,  0.99933519, -0.01428699,  0.09105917],
+       [ 0.02143718, -0.01501112, -0.9996575 ,  0.0831595 ],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
 
 
 def open_cam(camera, res):
@@ -195,7 +231,7 @@ class Baxter:
 
         rospy.init_node('Baxter')
         self.remove_table_obstacle()
-        self.setup_table_obstacle()
+        # self.setup_table_obstacle()
 
         # rospy.Subscriber('cameras/left_hand_camera/image', Image, self.left_hand_camera_callback)
         rospy.Subscriber('cameras/right_hand_camera/image', Image, self.camera_callback)

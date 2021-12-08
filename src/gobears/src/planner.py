@@ -48,6 +48,8 @@ class PathPlanner(object):
         # Instantiate a move group
         self._group = moveit_commander.MoveGroupCommander(group_name)
 
+        # self._group.set_max_velocity_scaling_factor(0.025)
+        
         # Set the maximum time MoveIt will try to plan before giving up
         self._group.set_planning_time(10)
 
@@ -127,6 +129,7 @@ class PathPlanner(object):
         co.primitives = [box]
         co.primitive_poses = [pose.pose]
 
+        print("Here")
         # Publish the object
         self._planning_scene_publisher.publish(co)
 

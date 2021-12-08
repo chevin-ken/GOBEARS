@@ -193,14 +193,22 @@ class GoBears():
 		# g_ba = make_homog_from_transform(transform)
 		# plant_pose = get_pose_from_homog(g_ba, baxter.G_AL_PLANT)
 
-		plant_pose = Pose()
-		plant_pose.position.x = plant_ar_pose.position.x + 0.035
-		plant_pose.position.y = plant_ar_pose.position.y
-		plant_pose.position.z = plant_ar_pose.position.z + 0.2
-		plant_pose.orientation.x = 0
-		plant_pose.orientation.y = 1
-		plant_pose.orientation.z = 0
-		plant_pose.orientation.w = 0
+		# plant_pose = Pose()
+		# plant_pose.position.x = plant_ar_pose.position.x + 0.035
+		# plant_pose.position.y = plant_ar_pose.position.y
+		# plant_pose.position.z = plant_ar_pose.position.z + 0.2
+		# plant_pose.orientation.x = 0
+		# plant_pose.orientation.y = 1
+		# plant_pose.orientation.z = 0
+		# plant_pose.orientation.w = 0
+		tag_pose = plant_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		plant_pose = get_pose_from_homog(g_ba, baxter.G_AL_PLANT_HOVER)
+
+
 		plant_pose_stamped = PoseStamped()
 		plant_pose_stamped.pose = plant_pose
 		plant_pose_stamped.header.frame_id = "base"
@@ -208,14 +216,29 @@ class GoBears():
 		return plant_pose_stamped
 
 	def get_plant_pickup_pose(self, plant_ar_pose):
-		plant_pose = Pose()
-		plant_pose.position.x = plant_ar_pose.position.x + 0.035
-		plant_pose.position.y = plant_ar_pose.position.y
-		plant_pose.position.z = plant_ar_pose.position.z + 0.03
-		plant_pose.orientation.x = 0
-		plant_pose.orientation.y = 1
-		plant_pose.orientation.z = 0
-		plant_pose.orientation.w = 0
+		# plant_pose = Pose()
+		# plant_pose.position.x = plant_ar_pose.position.x + 0.035
+		# plant_pose.position.y = plant_ar_pose.position.y
+		# plant_pose.position.z = plant_ar_pose.position.z + 0.03
+		# plant_pose.orientation.x = 0
+		# plant_pose.orientation.y = 1
+		# plant_pose.orientation.z = 0
+		# plant_pose.orientation.w = 0
+		# plant_pose_stamped = PoseStamped()
+		# plant_pose_stamped.pose = plant_pose
+		# plant_pose_stamped.header.frame_id = "base"
+
+		# return plant_pose_stamped
+
+
+		tag_pose = plant_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		plant_pose = get_pose_from_homog(g_ba, baxter.G_AL_PLANT_PICK)
+
+
 		plant_pose_stamped = PoseStamped()
 		plant_pose_stamped.pose = plant_pose
 		plant_pose_stamped.header.frame_id = "base"
@@ -223,33 +246,61 @@ class GoBears():
 		return plant_pose_stamped
 
 	def get_hole_hover_pose(self, hole_ar_pose):
-		hole_pose = Pose()
-		hole_pose.position.x = hole_ar_pose.position.x + 0.04
-		hole_pose.position.y = hole_ar_pose.position.y + 0.12
-		hole_pose.position.z = hole_ar_pose.position.z + 0.25
-		hole_pose.orientation.x = 0
-		hole_pose.orientation.y = 1
-		hole_pose.orientation.z = 0
-		hole_pose.orientation.w = 0
-		hole_pose_stamped = PoseStamped()
-		hole_pose_stamped.pose = hole_pose
-		hole_pose_stamped.header.frame_id = "base"
-		return hole_pose_stamped
+		# hole_pose = Pose()
+		# hole_pose.position.x = hole_ar_pose.position.x + 0.04
+		# hole_pose.position.y = hole_ar_pose.position.y + 0.12
+		# hole_pose.position.z = hole_ar_pose.position.z + 0.25
+		# hole_pose.orientation.x = 0
+		# hole_pose.orientation.y = 1
+		# hole_pose.orientation.z = 0
+		# hole_pose.orientation.w = 0
+		# hole_pose_stamped = PoseStamped()
+		# hole_pose_stamped.pose = hole_pose
+		# hole_pose_stamped.header.frame_id = "base"
+		# return hole_pose_stamped
+
+		tag_pose = hole_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		plant_pose = get_pose_from_homog(g_ba, baxter.G_AL_PLANT_HOVER_2)
+
+
+		plant_pose_stamped = PoseStamped()
+		plant_pose_stamped.pose = plant_pose
+		plant_pose_stamped.header.frame_id = "base"
+
+		return plant_pose_stamped
 
 	def get_hole_release_pose(self, hole_ar_pose):
-		hole_pose = Pose()
-		hole_pose.position.x = hole_ar_pose.position.x + 0.04
-		hole_pose.position.y = hole_ar_pose.position.y + 0.12
-		hole_pose.position.z = hole_ar_pose.position.z + 0.10
-		hole_pose.orientation.x = 0
-		hole_pose.orientation.y = 1
-		hole_pose.orientation.z = 0
-		hole_pose.orientation.w = 0
+		# hole_pose = Pose()
+		# hole_pose.position.x = hole_ar_pose.position.x + 0.04
+		# hole_pose.position.y = hole_ar_pose.position.y + 0.12
+		# hole_pose.position.z = hole_ar_pose.position.z + 0.10
+		# hole_pose.orientation.x = 0
+		# hole_pose.orientation.y = 1
+		# hole_pose.orientation.z = 0
+		# hole_pose.orientation.w = 0
 
-		hole_pose_stamped = PoseStamped()
-		hole_pose_stamped.pose = hole_pose
-		hole_pose_stamped.header.frame_id = "base"
-		return hole_pose_stamped
+		# hole_pose_stamped = PoseStamped()
+		# hole_pose_stamped.pose = hole_pose
+		# hole_pose_stamped.header.frame_id = "base"
+		# return hole_pose_stamped
+
+		tag_pose = hole_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		plant_pose = get_pose_from_homog(g_ba, baxter.G_AL_PLANT_PLACE)
+
+
+		plant_pose_stamped = PoseStamped()
+		plant_pose_stamped.pose = plant_pose
+		plant_pose_stamped.header.frame_id = "base"
+
+		return plant_pose_stamped
 
 	def get_water_hover_pose(self, water_ar_pose):
 		# water_pose = Pose()
@@ -387,6 +438,7 @@ class GoBears():
 		# self.baxter.release_gripper()
 
 		#Detect location of plant 
+		self.baxter.move_to_pose(baxter.RESET_POSE, [], "left")
 		plant_ar_pose = self.baxter.get_ar_pose(PLANT_AR_TAG_ID)
 
 		#Compute desired relative final pose with respect to ar tag pose
@@ -439,6 +491,8 @@ class GoBears():
 		rospy.sleep(1)
 		# Open gripper
 		self.baxter.open_gripper()
+		self.baxter.move_to_pose(hole_hover_pose, orientation_constraints, "left")
+		
 
 	def water(self):
 		#Find location of watering can 
@@ -502,6 +556,7 @@ class GoBears():
 
 		# #Detect location of hole
 		# hole_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
+        # self._group.set_max_velocity_scaling_factor(0.025)
 
 		# #Compute desired relative final pose with respect to hole pose
 		# hole_watering_pose = self.get_hole_watering_pose(hole_ar_pose)
@@ -547,7 +602,7 @@ if __name__ == '__main__':
 	# print("Test ended")
 	# gobears.dig()
 	# print("Finished digging, now planting")
-	# gobears.plant()
+	gobears.plant()
 	# print("Finished filling now watering")
 	gobears.water()
 	print("All done!")
