@@ -12,6 +12,8 @@ from scipy.spatial.transform import Rotation as R
 import numpy as np
 from moveit_msgs.msg import Constraints, OrientationConstraint
 
+#set_max_velocity_scaling_factor(0.025)
+
 # Open camera(camera is a string and res is a2-elementvector)
 #g_al_setup: transform from ar tag to l gripper at setup stage, before descending
 # G_AL_SETUP = np.array([[ 0.00179543,  0.99388374,  0.11041685, -0.00250071],
@@ -50,6 +52,30 @@ G_AL_PLANT = np.array([[ -0.14550063,  -0.97322132,  -0.17796016,  -0.13693422],
  [ 0.0046353, 0.17920181 ,-0.98380142, 0.30677438],
  [ 0.,          0. ,         0.,          1.        ]]
 )
+
+
+G_AL_WATER_HOVER = np.array([[ 0.06309455, -0.99749481, -0.03198712,  0.01534037],
+       [-0.20222637, -0.04416438,  0.97834248,  0.01183699],
+       [-0.97730424, -0.05525944, -0.20450629,  0.06188132],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
+G_AL_WATER_PICK = np.array([[ 0.09096591, -0.99384733, -0.06318778,  0.00619209],
+       [-0.18901519, -0.07952819,  0.97874845,  0.08207197],
+       [-0.97775174, -0.0770893 , -0.19508659,  0.09284914],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
+
+G_AL_WATER_BIN_HOVER = np.array([[-0.28975986, -0.04960144,  0.95581323,  0.01587432],
+       [-0.03319443,  0.99857621,  0.04175754,  0.08506615],
+       [-0.95652358, -0.01962802, -0.29099379,  0.20764598],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
+
+G_AL_WATER_BIN_WATER = np.array([[-0.96268888, -0.03020991, -0.26891909, -0.05169169],
+       [-0.04542564,  0.99768853,  0.05053817,  0.08517795],
+       [ 0.26677074,  0.06086836, -0.96183596,  0.20559746],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
 
 def open_cam(camera, res):
     # Check if valid resolution
@@ -122,6 +148,8 @@ class Baxter:
     def ar_pose_callback(self, alvar_markers):
         for marker in alvar_markers.markers:
             marker_id = marker.id
+            if marker_id not in AR_MARKER_LIST:
+                continue
             if self.ar_marker_positions[marker_id] == 0:
                 pose = marker.pose.pose 
                 self.ar_marker_positions[marker_id] = pose
@@ -141,15 +169,34 @@ class Baxter:
         raw_input("Press <Enter> to move the camera to initial pose: ")
         self.execute(plan, "left")
 
+    def setup_table_obstacle(self):
+        table_pose = PoseStamped()
+        table_pose.header.frame_id = "base"
+        table_pose.pose.position.x = 0.5
+        table_pose.pose.position.y = 0.0
+        table_pose.pose.position.z = 0.0
+        table_pose.pose.orientation.x = 0.0
+        table_pose.pose.orientation.y = 0.0
+        table_pose.pose.orientation.z = 0.0
+        table_pose.pose.orientation.w = 1.0
+
+        self.left_planner.add_box_obstacle(np.array([0.40, 1.20, 0.10]), "table", table_pose)
+
+    def remove_table_obstacle(self):
+        self.left_planner.remove_obstacle("table")
+
     def __init__(self):
         self.image = None
         self.ar_marker_positions = [0] * len(AR_MARKER_LIST)
 
         self.left_planner = PathPlanner("left_arm")
-        self.right_planner = PathPlanner("right_arm")
+        # self.right_planner = PathPlanner("right_arm")
         # self.setup_left_hand_camera()
 
         rospy.init_node('Baxter')
+        self.remove_table_obstacle()
+        self.setup_table_obstacle()
+
         # rospy.Subscriber('cameras/left_hand_camera/image', Image, self.left_hand_camera_callback)
         rospy.Subscriber('cameras/right_hand_camera/image', Image, self.camera_callback)
 
@@ -159,9 +206,10 @@ class Baxter:
         while(self.ar_marker_positions == None):
             continue
         self.left_gripper = robot_gripper.Gripper('left')
+        self.left_gripper.open()
+
         self.left_gripper.calibrate()
         rospy.sleep(2.0)
-        self.left_gripper.open()
         # self.left_gripper.open()
         # rospy.sleep(1.0)
 
@@ -181,7 +229,7 @@ class Baxter:
     def close_gripper(self):
         self.left_gripper.close()
 
-    def open_gripper():
+    def open_gripper(self):
         self.left_gripper.open()
 
     def scoop():
@@ -202,7 +250,8 @@ class Baxter:
     def plan(self, target, orientation_constraints, arm):
         if arm == "left":
             return self.left_planner.plan_to_pose(target, orientation_constraints)
-        return self.right_planner.plan_to_pose(target, orientation_constraints)
+        else:
+            return self.right_planner.plan_to_pose(target, orientation_constraints)
 
     def execute(self, plan, arm):
         if arm == "left":
@@ -210,8 +259,20 @@ class Baxter:
         else:
             return self.right_planner.execute_plan(plan)
 
-
-
+    def move_to_pose(self, pose, orientation_constraints, gripper):
+        success = False
+        while not success:
+            plan_found = False
+            while not plan_found:
+                try:
+                    plan = self.plan(pose, orientation_constraints, gripper)
+                    plan_found = len(plan.joint_trajectory.points) > 0
+                except:
+                    print("Plan not found, continuing to search")
+                if not plan_found:
+                    print("Plan not found, continuing to search")
+            raw_input("Press enter to move to pose")
+            success = self.execute(plan, gripper)
 
     #  TODO: refactor below (or any appropriate) functions to be in a separate file with tools
     # returns TransformStamped object
@@ -279,7 +340,7 @@ class Baxter:
             
     def test(self):
         print("Test")
-        gripper_to_tag = self.lookup_transform("ar_marker_3", "left_gripper")
+        gripper_to_tag = self.lookup_transform("ar_marker_1", "left_gripper")
         g_al = make_homog_from_transform(gripper_to_tag.transform)
         print("GAL: ", g_al)
         return
@@ -287,4 +348,5 @@ class Baxter:
 
 
 if __name__ == '__main__':
-    test()
+    b = Baxter()
+    b.test()

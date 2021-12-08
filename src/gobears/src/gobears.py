@@ -15,6 +15,17 @@ HOLE_2_AR_TAG_ID = 4
 PLANT_AR_TAG_ID = 3
 WATER_AR_TAG_ID = 0
 
+# grip position
+
+# Translation: [0.840, 0.374, -0.187]
+# Rotation: in Quaternion [0.016, 0.746, -0.002, 0.666]
+
+# ar marker
+
+# Translation: [0.751, 0.408, -0.236]
+# Rotation: in Quaternion [0.026, 0.044, -0.725, 0.687]
+
+# translation: [0.9, -0.35, 0.5]
 class GoBears():
 	def __init__(self):
 		self.baxter = Baxter()
@@ -83,7 +94,7 @@ class GoBears():
 		tilt_constraint.absolute_z_axis_tolerance = .05
 		orientation_constraints = [tilt_constraint]
 		trowel_plan = self.baxter.plan(trowel_pose, orientation_constraints, "left")
-		raw_input("Press <Enter> to move the left arm to trowel pose: ")
+		raw_input("Press <Enter> to move the left arm to trowel p0.016, 0.746, -0.002, 0.666ose: ")
 		
 		#Try to enforce the success of the motion after having a plan
 		successful = False
@@ -94,13 +105,11 @@ class GoBears():
 			except:
 				print("failed: retrying...")
 
-
 		r = get_r_from_quaternion(trowel_pose.orientation)
 		roll, pitch, yaw = r.as_euler('xyz', degrees = True)
 		pitch += 45
 		r = R.from_euler('xyz', [roll, pitch, yaw], degrees = True)
 		trowel_pose.orientation = get_quaternion_from_r(r)
-
 
 
 		orientation_constraints = []
@@ -185,7 +194,7 @@ class GoBears():
 		# plant_pose = get_pose_from_homog(g_ba, baxter.G_AL_PLANT)
 
 		plant_pose = Pose()
-		plant_pose.position.x = plant_ar_pose.position.x + 0.03
+		plant_pose.position.x = plant_ar_pose.position.x + 0.035
 		plant_pose.position.y = plant_ar_pose.position.y
 		plant_pose.position.z = plant_ar_pose.position.z + 0.2
 		plant_pose.orientation.x = 0
@@ -200,7 +209,7 @@ class GoBears():
 
 	def get_plant_pickup_pose(self, plant_ar_pose):
 		plant_pose = Pose()
-		plant_pose.position.x = plant_ar_pose.position.x + 0.03
+		plant_pose.position.x = plant_ar_pose.position.x + 0.035
 		plant_pose.position.y = plant_ar_pose.position.y
 		plant_pose.position.z = plant_ar_pose.position.z + 0.03
 		plant_pose.orientation.x = 0
@@ -216,7 +225,7 @@ class GoBears():
 	def get_hole_hover_pose(self, hole_ar_pose):
 		hole_pose = Pose()
 		hole_pose.position.x = hole_ar_pose.position.x + 0.04
-		hole_pose.position.y = hole_ar_pose.position.y + 0.05
+		hole_pose.position.y = hole_ar_pose.position.y + 0.12
 		hole_pose.position.z = hole_ar_pose.position.z + 0.25
 		hole_pose.orientation.x = 0
 		hole_pose.orientation.y = 1
@@ -230,8 +239,8 @@ class GoBears():
 	def get_hole_release_pose(self, hole_ar_pose):
 		hole_pose = Pose()
 		hole_pose.position.x = hole_ar_pose.position.x + 0.04
-		hole_pose.position.y = hole_ar_pose.position.y + 0.05
-		hole_pose.position.z = hole_ar_pose.position.z + 0.15
+		hole_pose.position.y = hole_ar_pose.position.y + 0.12
+		hole_pose.position.z = hole_ar_pose.position.z + 0.10
 		hole_pose.orientation.x = 0
 		hole_pose.orientation.y = 1
 		hole_pose.orientation.z = 0
@@ -243,34 +252,110 @@ class GoBears():
 		return hole_pose_stamped
 
 	def get_water_hover_pose(self, water_ar_pose):
-		water_pose = Pose()
-		water_pose.position.x = water_ar_pose.position.x + 0.0
-		water_pose.position.y = water_ar_pose.position.y + 0.0
-		water_pose.position.z = water_ar_pose.position.z + 0.0
-		water_pose.orientation.x = 0
-		water_pose.orientation.y = 1
-		water_pose.orientation.z = 0
-		water_pose.orientation.w = 0
+		# water_pose = Pose()
+		# water_pose.position.x = water_ar_pose.position.x + 0.8
+		# water_pose.position.y = water_ar_pose.position.y - 0.35
+		# water_pose.position.z = water_ar_pose.position.z + 0.5
+		# water_pose.orientation.x = 0
+		# water_pose.orientation.y = 1
+		# water_pose.orientation.z = 0
+		# water_pose.orientation.w = 0
 	
+		
+
+
+		tag_pose = water_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		pose = get_pose_from_homog(g_ba, baxter.G_AL_WATER_HOVER)
+
+
 		water_pose_stamped = PoseStamped()
-		water_pose_stamped.pose = water_pose
+		water_pose_stamped.pose = pose
+		water_pose_stamped.header.frame_id = "base"
+		return water_pose_stamped
+
+	def get_water_bin_hover_pose(self, bin_ar_pose):
+		# water_pose = Pose()
+		# water_pose.position.x = water_ar_pose.position.x + 0.8
+		# water_pose.position.y = water_ar_pose.position.y - 0.35
+		# water_pose.position.z = water_ar_pose.position.z + 0.5
+		# water_pose.orientation.x = 0
+		# water_pose.orientation.y = 1
+		# water_pose.orientation.z = 0
+		# water_pose.orientation.w = 0
+	
+		
+
+
+		tag_pose = bin_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		pose = get_pose_from_homog(g_ba, baxter.G_AL_WATER_BIN_HOVER)
+
+
+		water_pose_stamped = PoseStamped()
+		water_pose_stamped.pose = pose
+		water_pose_stamped.header.frame_id = "base"
+		return water_pose_stamped
+
+	def get_water_bin_water_pose(self, bin_ar_pose):
+		# water_pose = Pose()
+		# water_pose.position.x = water_ar_pose.position.x + 0.8
+		# water_pose.position.y = water_ar_pose.position.y - 0.35
+		# water_pose.position.z = water_ar_pose.position.z + 0.5
+		# water_pose.orientation.x = 0
+		# water_pose.orientation.y = 1
+		# water_pose.orientation.z = 0
+		# water_pose.orientation.w = 0
+	
+		
+
+
+		tag_pose = bin_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		pose = get_pose_from_homog(g_ba, baxter.G_AL_WATER_BIN_WATER)
+
+
+		water_pose_stamped = PoseStamped()
+		water_pose_stamped.pose = pose
 		water_pose_stamped.header.frame_id = "base"
 		return water_pose_stamped
 
 	def get_water_place_pose(self, water_ar_pose):
-		water_pose = Pose()
-		water_pose.position.x = water_ar_pose.position.x + 0.0
-		water_pose.position.y = water_ar_pose.position.y + 0.0
-		water_pose.position.z = water_ar_pose.position.z + 0.0
-		water_pose.orientation.x = 0
-		water_pose.orientation.y = 1
-		water_pose.orientation.z = 0
-		water_pose.orientation.w = 0
+		# water_pose = Pose()
+		# water_pose.position.x = water_ar_pose.position.x + 0.9
+		# water_pose.position.y = water_ar_pose.position.y - 0.35
+		# water_pose.position.z = water_ar_pose.position.z + 0.5
+		# water_pose.orientation.x = 0
+		# water_pose.orientation.y = 1
+		# water_pose.orientation.z = 0
+		# water_pose.orientation.w = 0
 	
+		# water_pose_stamped = PoseStamped()
+		# water_pose_stamped.pose = water_pose
+		# water_pose_stamped.header.frame_id = "base"
+		# return water_pose_stamped
+
+		tag_pose = water_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		pose = get_pose_from_homog(g_ba, baxter.G_AL_WATER_PICK)
+
 		water_pose_stamped = PoseStamped()
-		water_pose_stamped.pose = water_pose
+		water_pose_stamped.pose = pose
 		water_pose_stamped.header.frame_id = "base"
 		return water_pose_stamped
+
 
 	def get_hole_watering_pose(self, hole_ar_pose):
 		watering_pose = Pose()
@@ -308,41 +393,48 @@ class GoBears():
 		# plant_pose = self.get_plant_relative_pose(plant_ar_pose)
 		plant_hover_pose = self.get_plant_hover_pose(plant_ar_pose)
 		orientation_constraints = []
-		plant_hover_plan = self.baxter.plan(plant_hover_pose, orientation_constraints, "left")
-		raw_input("Press <Enter> to move the left arm to plant hover pose: ")
-		self.baxter.execute(plant_hover_plan, "left")
+		self.baxter.move_to_pose(plant_hover_pose, orientation_constraints, "left")
+		# plant_hover_plan = self.baxter.plan(plant_hover_pose, orientation_constraints, "left")
+		# raw_input("Press <Enter> to move the left arm to plant hover pose: ")
+		# self.baxter.execute(plant_hover_plan, "left")
 
 		#Move to pose with orientation constraints
 		plant_pickup_pose = self.get_plant_pickup_pose(plant_ar_pose)
-		plant_pickup_plan = self.baxter.plan(plant_pickup_pose, orientation_constraints, "left")
+		self.baxter.move_to_pose(plant_pickup_pose, orientation_constraints, "left")
+
+		# plant_pickup_plan = self.baxter.plan(plant_pickup_pose, orientation_constraints, "left")
 		# plant_pickup_plan = self.baxter.move_up(-0.27)
-		raw_input("Press <Enter> to move the left arm to plant pickup pose: ")
-		self.baxter.execute(plant_pickup_plan, "left")
+		# raw_input("Press <Enter> to move the left arm to plant pickup pose: ")
+		# self.baxter.execute(plant_pickup_plan, "left")
 
 		rospy.sleep(1)
 		# Close gripper
 		self.baxter.close_gripper()
 
 		# Move up 
-		plant_hover_plan = self.baxter.plan(plant_hover_pose, orientation_constraints, "left")
-		raw_input("Press <Enter> to move up: ")
-		self.baxter.execute(plant_hover_plan, "left")
+		self.baxter.move_to_pose(plant_hover_pose, orientation_constraints, "left")
+
+		# plant_hover_plan = self.baxter.plan(plant_hover_pose, orientation_constraints, "left")
+		# raw_input("Press <Enter> to move up: ")
+		# self.baxter.execute(plant_hover_plan, "left")
 
 		hole_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
 		print(hole_ar_pose)
 		
 		hole_hover_pose = self.get_hole_hover_pose(hole_ar_pose)
 		orientation_constraints = []
-		hole_hover_plan = self.baxter.plan(hole_hover_pose, orientation_constraints, "left")
-		raw_input("Press <Enter> to move the left arm to hole hover pose: ")
-		self.baxter.execute(hole_hover_plan, "left")
+		self.baxter.move_to_pose(hole_hover_pose, orientation_constraints, "left")
+		# hole_hover_plan = self.baxter.plan(hole_hover_pose, orientation_constraints, "left")
+		# raw_input("Press <Enter> to move the left arm to hole hover pose: ")
+		# self.baxter.execute(hole_hover_plan, "left")
 
 		#Move to pose with orientation constraints
 		hole_release_pose = self.get_hole_release_pose(hole_ar_pose)
-		hole_release_plan = self.baxter.plan(hole_release_pose, orientation_constraints, "left")
+		self.baxter.move_to_pose(hole_release_pose, orientation_constraints, "left")
+		# hole_release_plan = self.baxter.plan(hole_release_pose, orientation_constraints, "left")
 		# plant_pickup_plan = self.baxter.move_up(-0.15)
-		raw_input("Press <Enter> to move the left arm to hole release pose: ")
-		self.baxter.execute(hole_release_plan, "left")
+		# raw_input("Press <Enter> to move the left arm to hole release pose: ")
+		# self.baxter.execute(hole_release_plan, "left")
 
 		rospy.sleep(1)
 		# Open gripper
@@ -351,65 +443,99 @@ class GoBears():
 	def water(self):
 		#Find location of watering can 
 		water_ar_pose = self.baxter.get_ar_pose(WATER_AR_TAG_ID)
+		bin_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
 
 		#Compute desired relative final pose with respect to ar tag pose
-		water_hover_pose = self.baxter.get_water_hover_pose(water_ar_pose)
+		water_hover_pose = self.get_water_hover_pose(water_ar_pose)
 
 		#Move to pose with orientation constraints
 		orientation_constraints = []
-		water_hover_plan = self.baxter.plan(water_hover_pose, orientation_constraints, "left")
-		raw_input("Press <Enter> to move the left arm to water hover pose: ")
-		self.baxter.execute(water_hover_plan, "left")
+		self.baxter.move_to_pose(water_hover_pose, orientation_constraints, "left")
 
-		water_place_pose = self.baxter.get_water_place_pose(water_ar_pose)
-		water_place_plan = self.baxter.plan(water_place_pose, orientation_constraints, "left")
-		raw_input("Press <Enter> to move the left arm to water place pose: ")
-		self.baxter.execute(water_place_plan, "left")
-		rospy.sleep(1)
-		#Close gripper to pick up water
+
+		water_pick_pose = self.get_water_place_pose(water_ar_pose)
+		water_pick_pose.pose.position.z -= .03
+		orientation_constraints = []
+		self.baxter.move_to_pose(water_pick_pose, orientation_constraints, "left")
+
+
+		tilt_constraint = OrientationConstraint()
+		
+		# allow 15 degrees of tilt in rpy when moving to hovering over bin
+		tilt_constraint.orientation = water_pick_pose.pose.orientation
+		tilt_constraint.absolute_x_axis_tolerance = .20
+		tilt_constraint.absolute_y_axis_tolerance = .20
+		tilt_constraint.absolute_z_axis_tolerance = 1.8
+		orientation_constraints = [tilt_constraint]
+
 		self.baxter.close_gripper()
+		water_lift_pose = self.get_water_place_pose(water_ar_pose)
+		water_lift_pose.pose.position.z += .1
+		self.baxter.move_to_pose(water_lift_pose, orientation_constraints, "left")
 
-		# Move up 
-		water_hover_plan = self.baxter.plan(water_hover_pose, orientation_constraints, "left")
-		raw_input("Press <Enter> to move up: ")
-		self.baxter.execute(water_hover_plan, "left")
+		water_bin_hover_pose = self.get_water_bin_hover_pose(bin_ar_pose)
+		self.baxter.move_to_pose(water_bin_hover_pose, orientation_constraints, "left")
 
-		#Detect location of hole
-		hole_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
+		tilt_constraint.absolute_y_axis_tolerance = 1.8
+		tilt_constraint.absolute_y_axis_tolerance = .20
 
-		#Compute desired relative final pose with respect to hole pose
-		hole_watering_pose = self.get_hole_watering_pose(hole_ar_pose)
+		orientation_constraints = [tilt_constraint]
+		water_bin_water_pose = self.get_water_bin_water_pose(bin_ar_pose)
+		self.baxter.move_to_pose(water_bin_water_pose, orientation_constraints, "left")
+		self.baxter.move_to_pose(water_lift_pose, orientation_constraints, "left")
 
-		#Move to pose with orientation constraints
-		orientation_constraints = []
-		hole_watering_plan = self.baxter.plan(hole_watering_pose, orientation_constraints, "left")
-		raw_input("Press <Enter> to move the left arm to watering pose: ")
-		self.baxter.execute(hole_watering_plan, "left")
-
-		#Execute pouring motion
-		self.baxter.pour()
-
-		#Move back to water hovering position
-		# water_ar_pose = self.baxter.get_ar_pose(WATER_AR_TAG_ID)
-		water_hover_plan = self.baxter.plan(water_hover_pose, orientation_constraints, "left")
-		raw_input("Press <Enter> to move the left arm to water hover pose: ")
-		self.baxter.execute(water_hover_plan, "left")
-
-		#Place water down in original position
-		water_place_plan = self.baxter.plan(water_place_pose, orientation_constraints, "left")
-		raw_input("Press <Enter> to move the left arm to water place pose: ")
-		self.baxter.execute(water_place_plan, "left")
-		rospy.sleep(1)
-		#Release gripper to put down watering can
+		self.baxter.move_to_pose(water_pick_pose, orientation_constraints, "left")
 		self.baxter.open_gripper()
 
-		# Move up 
-		water_hover_plan = self.baxter.plan(water_hover_pose, orientation_constraints, "left")
-		raw_input("Press <Enter> to move up: ")
-		self.baxter.execute(water_hover_plan, "left")
+		# orientation_constraints = []
+		# water_place_plan = self.baxter.plan(water_place_pose, orientation_constraints, "left")
+		# raw_input("Press <Enter> to move the left arm to water place pose: ")
+		# self.baxter.execute(water_place_plan, "left")
+		# rospy.sleep(1)
+		# #Close gripper to pick up water
+		# self.baxter.close_gripper()
 
-		#Return to a neutral position
-		self.baxter.reset()
+		# # Move up 
+		# water_hover_plan = self.baxter.plan(water_hover_pose, orientation_constraints, "left")
+		# raw_input("Press <Enter> to move up: ")
+		# self.baxter.execute(water_hover_plan, "left")
+
+		# #Detect location of hole
+		# hole_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
+
+		# #Compute desired relative final pose with respect to hole pose
+		# hole_watering_pose = self.get_hole_watering_pose(hole_ar_pose)
+
+		# #Move to pose with orientation constraints
+		# orientation_constraints = []
+		# hole_watering_plan = self.baxter.plan(hole_watering_pose, orientation_constraints, "left")
+		# raw_input("Press <Enter> to move the left arm to watering pose: ")
+		# self.baxter.execute(hole_watering_plan, "left")
+
+		# #Execute pouring motion
+		# self.baxter.pour()
+
+		# #Move back to water hovering position
+		# # water_ar_pose = self.baxter.get_ar_pose(WATER_AR_TAG_ID)
+		# water_hover_plan = self.baxter.plan(water_hover_pose, orientation_constraints, "left")
+		# raw_input("Press <Enter> to move the left arm to water hover pose: ")
+		# self.baxter.execute(water_hover_plan, "left")
+
+		# #Place water down in original position
+		# water_place_plan = self.baxter.plan(water_place_pose, orientation_constraints, "left")
+		# raw_input("Press <Enter> to move the left arm to water place pose: ")
+		# self.baxter.execute(water_place_plan, "left")
+		# rospy.sleep(1)
+		# #Release gripper to put down watering can
+		# self.baxter.open_gripper()
+
+		# # Move up 
+		# water_hover_plan = self.baxter.plan(water_hover_pose, orientation_constraints, "left")
+		# raw_input("Press <Enter> to move up: ")
+		# self.baxter.execute(water_hover_plan, "left")
+
+		# #Return to a neutral position
+		# self.baxter.reset()
 
 if __name__ == '__main__':
 	gobears = GoBears()
@@ -421,7 +547,7 @@ if __name__ == '__main__':
 	# print("Test ended")
 	# gobears.dig()
 	# print("Finished digging, now planting")
-	gobears.plant()
+	# gobears.plant()
 	# print("Finished filling now watering")
-	# gobears.water()
+	gobears.water()
 	print("All done!")
