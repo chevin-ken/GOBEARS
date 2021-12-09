@@ -266,6 +266,51 @@ class GoBears():
 
 		return plant_pose_stamped
 
+	def get_dig_1_pose(self, hole_ar_pose):
+		tag_pose = hole_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		dig_hover_pose = get_pose_from_homog(g_ba, baxter.G_AL_DIG_1)
+
+
+		dig_hover_stamped = PoseStamped()
+		dig_hover_stamped.pose = dig_hover_pose
+		dig_hover_stamped.header.frame_id = "base"
+
+		return dig_hover_stamped
+
+	def get_dig_2_pose(self, hole_ar_pose):
+		tag_pose = hole_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		dig_hover_pose = get_pose_from_homog(g_ba, baxter.G_AL_DIG_2)
+
+
+		dig_hover_stamped = PoseStamped()
+		dig_hover_stamped.pose = dig_hover_pose
+		dig_hover_stamped.header.frame_id = "base"
+
+		return dig_hover_stamped
+
+	def get_dig_3_pose(self, hole_ar_pose):
+		tag_pose = hole_ar_pose
+		transform = Transform()
+		transform.rotation = tag_pose.orientation
+		transform.translation = tag_pose.position
+		g_ba = make_homog_from_transform(transform)
+		dig_hover_pose = get_pose_from_homog(g_ba, baxter.G_AL_DIG_3)
+
+
+		dig_hover_stamped = PoseStamped()
+		dig_hover_stamped.pose = dig_hover_pose
+		dig_hover_stamped.header.frame_id = "base"
+
+		return dig_hover_stamped
+
 	def get_water_hover_pose(self, water_ar_pose):
 		# water_pose = Pose()
 		# water_pose.position.x = water_ar_pose.position.x + 0.8
@@ -418,6 +463,8 @@ class GoBears():
 		#Detect trowel
 		self.baxter.move_to_pose(baxter.RESET_POSE, [], "left")
 
+		while self.baxter.get_ar_pose(TROWEL_AR_TAG_ID) == 0:
+			self.baxter.rescan()
 		trowel_ar_pose = self.baxter.get_ar_pose(TROWEL_AR_TAG_ID)
 		self.baxter.change_velocity(0.5)
 
@@ -426,6 +473,8 @@ class GoBears():
 		trowel_hover_pose = self.get_trowel_hover_pose(trowel_ar_pose)
 		self.baxter.move_to_pose(trowel_hover_pose, orientation_constraints, "left")
 
+		# orientation_constraints = []
+		# self.baxter.move_to_pose(dig_1_pose, orientation_constraints, "left")
 
 		orientation_constraints = []
 		trowel_pick_pose = self.get_trowel_pick_pose(trowel_ar_pose)
@@ -436,39 +485,78 @@ class GoBears():
 		trowel_hover_pose.pose.position.z += 0.15
 		self.baxter.move_to_pose(trowel_hover_pose, orientation_constraints, "left")
 
+		# self.baxter.move_to_pose(baxter.RESET_POSE, [], "left")
 		bin_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
-		hole_ar_pose = self.get_water_bin_hover_pose(bin_ar_pose)
-		hole_ar_pose.pose.orientation = Quaternion()
-		hole_ar_pose.pose.orientation.y = 1
+		dig_1_pose = self.get_dig_1_pose(bin_ar_pose)
+		dig_1_pose.pose.orientation = Quaternion()
+		dig_1_pose.pose.orientation.y = 1
 
 		#Move to pose with orientation constraints
 		orientation_constraints = []
 
-		self.baxter.move_to_pose(hole_ar_pose, orientation_constraints, "left")
+		self.baxter.move_to_pose(dig_1_pose, orientation_constraints, "left")
 
-		hole_tilt_pose = copy.deepcopy(hole_ar_pose)
+		#dig 1
 
-		r = get_r_from_quaternion(hole_tilt_pose.pose.orientation)
-		roll, pitch, yaw = r.as_euler('xyz', degrees = True)
-		pitch += 45
-		r = R.from_euler('xyz', [roll, pitch, yaw], degrees = True)
-		hole_tilt_pose.pose.orientation = get_quaternion_from_r(r)
+		dig_2_pose = self.get_dig_2_pose(bin_ar_pose)
+		orientation_constraints = []
+		self.baxter.move_to_pose(dig_2_pose, orientation_constraints, "left")
 
-		tilt_constraint = OrientationConstraint()
+		#dig 2
 
-		tilt_constraint.orientation = hole_tilt_pose.pose.orientation
-		tilt_constraint.absolute_x_axis_tolerance = .1
-		tilt_constraint.absolute_y_axis_tolerance = 1.8
-		tilt_constraint.absolute_z_axis_tolerance = .1
-		orientation_constraints = [tilt_constraint]
-		self.baxter.move_to_pose(hole_tilt_pose, orientation_constraints, "left")
+		dig_3_pose = self.get_dig_3_pose(bin_ar_pose)
+		orientation_constraints = []
+		self.baxter.move_to_pose(dig_3_pose, orientation_constraints, "left")
 
-		#Execute scooping motion
-		# self.baxter.scoop()
+		self.baxter.move_to_pose(baxter.RESET_POSE, [], "left")
+		# dig_1_pose = self.get_dig_1_pose(bin_ar_pose)
+		# orientation_constraints = []
+		# self.baxter.move_to_pose(dig_1_pose, orientation_constraints, "left")
+
+		# r = get_r_from_quaternion(hole_tilt_pose.pose.orientation)
+		# roll, pitch, yaw = r.as_euler('xyz', degrees = True)
+		# pitch -= 45
+		# r = R.from_euler('xyz', [roll, pitch, yaw], degrees = True)
+		# hole_tilt_pose.pose.orientation = get_quaternion_from_r(r)
+		# hole_tilt_pose.pose.position.x -= .05
+
+		# tilt_constraint = OrientationConstraint()
+		# orientation_constraints = []
+		# self.baxter.move_to_pose(dig_1_pose, orientation_constraints, "left")
+		# tilt_constraint.orientation = hole_tilt_pose.pose.orientation
+		# tilt_constraint.absolute_x_axis_tolerance = .2
+		# tilt_constraint.absolute_y_axis_tolerance = 1.8
+		# tilt_constraint.absolute_z_axis_tolerance = .2
+		# orientation_constraints = [tilt_constraint]
+		# self.baxter.move_to_pose(hole_tilt_pose, orientation_constraints, "left")
+
+		# hole_tilt_dig_pose = copy.deepcopy(hole_tilt_pose)
+		# hole_tilt_dig_pose.pose.position.z -= .03
+		# self.baxter.move_to_pose(hole_tilt_dig_pose, orientation_constraints, "left")
+
+		# hole_tilt_dig_pose.pose.position.x += 0.05
+		# self.baxter.move_to_pose(hole_tilt_dig_pose, orientation_constraints, "left")
+		# #Execute scooping motion
+		# # self.baxter.scoop()
+
+		#Move back to trowel hover pose
+		orientation_constraints = []
+		self.baxter.move_to_pose(trowel_hover_pose, orientation_constraints, "left")
+
+		#Move to trowel pickup pose
+		orientation_constraints = []
+		self.baxter.move_to_pose(trowel_pick_pose, orientation_constraints, "left")
+
+		#Release trowel
 		raw_input("Press enter to open gripper")
 		self.baxter.open_gripper()
 
 	def plant(self):
+		self.baxter.change_velocity(0.75)
+		self.baxter.move_to_pose(baxter.RESET_POSE, [], "left")
+		self.baxter.rescan()
+		while self.baxter.get_ar_pose(PLANT_AR_TAG_ID) == 0:
+			self.baxter.rescan()
 		#Detect location of place to put trowel down
 		# trowel_ar_pose = self.baxter.get_ar_pose(TROWEL_AR_TAG_ID)
 
@@ -483,7 +571,6 @@ class GoBears():
 		# self.baxter.release_gripper()
 
 		#Detect location of plant 
-		self.baxter.move_to_pose(baxter.RESET_POSE, [], "left")
 		plant_ar_pose = self.baxter.get_ar_pose(PLANT_AR_TAG_ID)
 
 		#Compute desired relative final pose with respect to ar tag pose
@@ -538,9 +625,19 @@ class GoBears():
 		self.baxter.open_gripper()
 		self.baxter.move_to_pose(hole_hover_pose, orientation_constraints, "left")
 		
-
 	def water(self):
 		#Find location of watering can 
+		self.baxter.change_velocity(0.75)
+		water_reset = copy.deepcopy(baxter.RESET_POSE)
+
+		self.baxter.rescan()
+		while self.baxter.get_ar_pose(WATER_AR_TAG_ID) == 0:
+			self.baxter.rescan()
+
+		water_reset.pose.position.x -= .15
+		water_reset.pose.position.z -= .15
+		self.baxter.move_to_pose(water_reset, [], "left")
+
 		water_ar_pose = self.baxter.get_ar_pose(WATER_AR_TAG_ID)
 		bin_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
 
@@ -567,12 +664,14 @@ class GoBears():
 		tilt_constraint.absolute_z_axis_tolerance = 1.8
 		orientation_constraints = [tilt_constraint]
 
+		print("here")
 		self.baxter.close_gripper()
 		water_lift_pose = self.get_water_place_pose(water_ar_pose)
 		water_lift_pose.pose.position.z += .1
 		self.baxter.move_to_pose(water_lift_pose, orientation_constraints, "left")
 
 		water_bin_hover_pose = self.get_water_bin_hover_pose(bin_ar_pose)
+		water_bin_hover_pose.pose.position.z += 0.05
 		self.baxter.move_to_pose(water_bin_hover_pose, orientation_constraints, "left")
 
 		tilt_constraint.absolute_y_axis_tolerance = 1.8
@@ -580,6 +679,7 @@ class GoBears():
 
 		orientation_constraints = [tilt_constraint]
 		water_bin_water_pose = self.get_water_bin_water_pose(bin_ar_pose)
+		water_bin_water_pose.pose.position.z += 0.05
 		self.baxter.move_to_pose(water_bin_water_pose, orientation_constraints, "left")
 		self.baxter.move_to_pose(water_lift_pose, orientation_constraints, "left")
 
@@ -647,7 +747,7 @@ if __name__ == '__main__':
 	# print("Test ended")
 	gobears.dig()
 	# print("Finished digging, now planting")
-	# gobears.plant()
+	gobears.plant()
 	# print("Finished filling now watering")
-	# gobears.water()
+	gobears.water()
 	print("All done!")

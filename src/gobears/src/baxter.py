@@ -22,17 +22,14 @@ from moveit_msgs.msg import Constraints, OrientationConstraint
 #  [ 0.,          0.,          0.,          1.        ]])
 RESET_POSE = PoseStamped()
 RESET_POSE.header.frame_id = "base" 
-RESET_POSE.pose.position.x = 0.539
-RESET_POSE.pose.position.y = 0.460
-RESET_POSE.pose.position.z = 0.075
+RESET_POSE.pose.position.x = 0.730
+RESET_POSE.pose.position.y = 0.316
+RESET_POSE.pose.position.z = 0.308
 RESET_POSE.pose.orientation.y = 1
 
-
-
-
-G_AL_SETUP = np.array([[-0.10662976,  0.99346368,  0.04074314, -0.00434937],
-       [ 0.95448143,  0.09079382,  0.28411562, -0.06516797],
-       [ 0.27855933,  0.06918375, -0.95792396,  0.03382742],
+G_AL_SETUP = np.array([[ 0.00818295,  0.99917152,  0.03986616, -0.02954517],
+       [ 0.94536189, -0.02072402,  0.32536351, -0.08285902],
+       [ 0.32592014,  0.03502552, -0.94474826,  0.01913964],
        [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
 
@@ -42,22 +39,20 @@ G_AL_SETUP = np.array([[-0.10662976,  0.99346368,  0.04074314, -0.00434937],
 #  [ 1.65583284e-01,  7.13714576e-02, -9.83609827e-01, -2.28385614e-02],
 #  [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  1.00000000e+00]])
 
-G_AL_FINAL = np.array([[-0.08564988,  0.99411818,  0.06628074, -0.00709231],
-       [ 0.95201656,  0.06204121,  0.29969209, -0.03753944],
-       [ 0.29381722,  0.08876895, -0.9517308 , -0.02664825],
+G_AL_FINAL = np.array([[-0.00814994,  0.99929983,  0.03651618, -0.02417376],
+       [ 0.95533295, -0.00300733,  0.29551636, -0.06529734],
+       [ 0.29541926,  0.03729355, -0.95463954, -0.03080719],
        [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
-G_AL_PLANT_HOVER = np.array([[ -0.14550063,  -0.97322132,  -0.17796016,  -0.13693422],
- [ -0.9893473, 0.14396863,  0.0215628, 0.06014289],
- [ 0.0046353, 0.17920181 ,-0.98380142, 0.30677438],
- [ 0.,          0. ,         0.,          1.        ]]
-)
+G_AL_PLANT_HOVER = np.array([[-0.01884563, -0.99925803, -0.0335892 ,  0.03511179],
+       [-0.9997397 ,  0.01840134,  0.01348751,  0.05257214],
+       [-0.01285942,  0.03383464, -0.99934471,  0.09479857],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
-G_AL_PLANT = np.array([[ -0.14550063,  -0.97322132,  -0.17796016,  -0.13693422],
- [ -0.9893473, 0.14396863,  0.0215628, 0.06014289],
- [ 0.0046353, 0.17920181 ,-0.98380142, 0.30677438],
- [ 0.,          0. ,         0.,          1.        ]]
-)
+G_AL_PLANT = np.array([[ 0.01522844, -0.99955507, -0.02564694,  0.02636628],
+       [-0.99986386, -0.01538607,  0.00596036,  0.06183893],
+       [-0.00635231,  0.02555268, -0.99965329,  0.01959456],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
 
 G_AL_WATER_HOVER = np.array([[ 0.06309455, -0.99749481, -0.03198712,  0.01534037],
@@ -110,7 +105,20 @@ G_AL_PLANT_PLACE = np.array([[-0.99920738,  0.03322426, -0.02192644,  0.05750589
        [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
 
+G_AL_DIG_1 = np.array([[-0.81119025, -0.16395576, -0.56132778, -0.1401922 ],
+       [-0.22736393,  0.97279576,  0.04443027,  0.03417519],
+       [ 0.53877269,  0.16366709, -0.82640007,  0.34344615],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
+G_AL_DIG_2 = np.array([[-0.81674723, -0.04052531, -0.57557072, -0.16189517],
+       [-0.10347557,  0.99164598,  0.07701335,  0.05287688],
+       [ 0.5676414 ,  0.12245794, -0.81411749,  0.1677779 ],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
+G_AL_DIG_3 = np.array([[-0.99187391, -0.0805536 , -0.09847467,  0.02518267],
+       [-0.09458515,  0.98455644,  0.1473169 ,  0.07614999],
+       [ 0.08508696,  0.15543403, -0.98417502,  0.15460154],
+       [ 0.        ,  0.        ,  0.        ,  1.        ]])
 def open_cam(camera, res):
     # Check if valid resolution
     if not any((res[0] == r[0] and res[1] == r[1])for r in CameraController.MODES):
@@ -182,11 +190,14 @@ class Baxter:
     def ar_pose_callback(self, alvar_markers):
         for marker in alvar_markers.markers:
             marker_id = marker.id
+            if not self.scan_again:
+                continue
             if marker_id not in AR_MARKER_LIST:
                 continue
             if self.ar_marker_positions[marker_id] == 0:
                 pose = marker.pose.pose 
                 self.ar_marker_positions[marker_id] = pose
+        self.scan_again = False
 
     def setup_left_hand_camera(self):
         pose = PoseStamped()
@@ -234,6 +245,7 @@ class Baxter:
         # self.remove_table_obstacle()
         self.setup_table_obstacle()
 
+        self.scan_again = True
         # rospy.Subscriber('cameras/left_hand_camera/image', Image, self.left_hand_camera_callback)
         rospy.Subscriber('cameras/right_hand_camera/image', Image, self.camera_callback)
 
@@ -268,6 +280,10 @@ class Baxter:
 
     def open_gripper(self):
         self.left_gripper.open()
+
+    def rescan(self):
+        raw_input("Press enter to scan again")
+        self.scan_again = True
 
     def change_velocity(self, scaling_factor):
         self.left_planner.change_velocity(scaling_factor)
