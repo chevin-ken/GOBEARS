@@ -208,7 +208,7 @@ class Baxter:
         table_pose.header.frame_id = "base"
         table_pose.pose.position.x = 0.5
         table_pose.pose.position.y = 0.0
-        table_pose.pose.position.z = -0.2
+        table_pose.pose.position.z = -0.3
         table_pose.pose.orientation.x = 0.0
         table_pose.pose.orientation.y = 0.0
         table_pose.pose.orientation.z = 0.0
@@ -219,6 +219,9 @@ class Baxter:
     def remove_table_obstacle(self):
         self.left_planner.remove_obstacle("table")
 
+    def calibrate_gripper(self):
+        self.left_gripper.calibrate()
+
     def __init__(self):
         self.image = None
         self.ar_marker_positions = [0] * len(AR_MARKER_LIST)
@@ -228,7 +231,7 @@ class Baxter:
         # self.setup_left_hand_camera()
 
         rospy.init_node('Baxter')
-        self.remove_table_obstacle()
+        # self.remove_table_obstacle()
         self.setup_table_obstacle()
 
         # rospy.Subscriber('cameras/left_hand_camera/image', Image, self.left_hand_camera_callback)

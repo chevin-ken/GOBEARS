@@ -5,15 +5,17 @@ import cv2
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 import baxter
 from baxter import * 
-from geometry_msgs.msg import PoseStamped, Pose
+from geometry_msgs.msg import PoseStamped, Pose, Quaternion
 from scipy.spatial.transform import Rotation as R
 from moveit_msgs.msg import Constraints, OrientationConstraint
+import copy
 
 TROWEL_AR_TAG_ID = 2
 HOLE_AR_TAG_ID = 1
 HOLE_2_AR_TAG_ID = 4
 PLANT_AR_TAG_ID = 3
 WATER_AR_TAG_ID = 0
+
 
 # grip position
 
@@ -147,47 +149,6 @@ class GoBears():
 		raw_input("Press <Enter> to move the left arm to trowel pose: ")
 		self.baxter.execute(trowel_plan, "left")
 
-
-	def dig(self):
-		#Detect trowel
-		trowel_ar_pose = self.baxter.get_ar_pose(TROWEL_AR_TAG_ID)
-		self.baxter.change_velocity(1)
-
-		#Compute desired relative final pose with respect to ar tag pose
-		orientation_constraints = []
-		trowel_hover_pose = self.get_trowel_hover_pose(trowel_ar_pose)
-		self.baxter.move_to_pose(trowel_hover_pose, orientation_constraints, "left")
-
-
-		orientation_constraints = []
-		trowel_pick_pose = self.get_trowel_pick_pose(trowel_ar_pose)
-		self.baxter.move_to_pose(trowel_pick_pose, orientation_constraints, "left")
-
-
-
-		self.baxter.close_gripper()
-
-		# #Dig Loop
-		# complete = False
-		# while not complete:
-		# 	#Detect location of hole
-		# 	hole_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
-
-		# 	#Compute desired relative final pose with respect to hole pose
-		# 	hole_pose = hole_ar_pose
-
-		# 	#Move to pose with orientation constraints
-		# 	orientation_constraints = []
-
-		# 	hole_plan = self.baxter.plan(hole_pose, orientation_constraints, "left")
-		# 	raw_input("Press <Enter> to move the left arm to hole pose: ")
-		# 	self.baxter.execute(hole_plan, "left")
-
-		# 	#Execute scooping motion
-		# 	self.baxter.scoop()
-
-		# 	#Determine completion somehow
-		# 	complete = True
 
 	def get_plant_hover_pose(self, plant_ar_pose):
 		# transform = Transform()
@@ -452,6 +413,60 @@ class GoBears():
 		water_pose_stamped.header.frame_id = "base"
 		return water_pose_stamped
 
+
+	def dig(self):
+		#Detect trowel
+		self.baxter.move_to_pose(baxter.RESET_POSE, [], "left")
+
+		trowel_ar_pose = self.baxter.get_ar_pose(TROWEL_AR_TAG_ID)
+		self.baxter.change_velocity(0.5)
+
+		#Compute desired relative final pose with respect to ar tag pose
+		orientation_constraints = []
+		trowel_hover_pose = self.get_trowel_hover_pose(trowel_ar_pose)
+		self.baxter.move_to_pose(trowel_hover_pose, orientation_constraints, "left")
+
+
+		orientation_constraints = []
+		trowel_pick_pose = self.get_trowel_pick_pose(trowel_ar_pose)
+		self.baxter.move_to_pose(trowel_pick_pose, orientation_constraints, "left")
+
+		self.baxter.close_gripper()
+		self.baxter.change_velocity(0.75)
+		trowel_hover_pose.pose.position.z += 0.15
+		self.baxter.move_to_pose(trowel_hover_pose, orientation_constraints, "left")
+
+		bin_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
+		hole_ar_pose = self.get_water_bin_hover_pose(bin_ar_pose)
+		hole_ar_pose.pose.orientation = Quaternion()
+		hole_ar_pose.pose.orientation.y = 1
+
+		#Move to pose with orientation constraints
+		orientation_constraints = []
+
+		self.baxter.move_to_pose(hole_ar_pose, orientation_constraints, "left")
+
+		hole_tilt_pose = copy.deepcopy(hole_ar_pose)
+
+		r = get_r_from_quaternion(hole_tilt_pose.pose.orientation)
+		roll, pitch, yaw = r.as_euler('xyz', degrees = True)
+		pitch += 45
+		r = R.from_euler('xyz', [roll, pitch, yaw], degrees = True)
+		hole_tilt_pose.pose.orientation = get_quaternion_from_r(r)
+
+		tilt_constraint = OrientationConstraint()
+
+		tilt_constraint.orientation = hole_tilt_pose.pose.orientation
+		tilt_constraint.absolute_x_axis_tolerance = .1
+		tilt_constraint.absolute_y_axis_tolerance = 1.8
+		tilt_constraint.absolute_z_axis_tolerance = .1
+		orientation_constraints = [tilt_constraint]
+		self.baxter.move_to_pose(hole_tilt_pose, orientation_constraints, "left")
+
+		#Execute scooping motion
+		# self.baxter.scoop()
+		raw_input("Press enter to open gripper")
+		self.baxter.open_gripper()
 
 	def plant(self):
 		#Detect location of place to put trowel down
