@@ -461,9 +461,9 @@ class GoBears():
 
 	def dig(self):
 		#Detect trowel
-		self.baxter.move_to_pose(baxter.RESET_POSE, [], "left")
+		# self.baxter.move_to_pose(baxter.RESET_POSE, [], "left")
 
-		while self.baxter.get_ar_pose(TROWEL_AR_TAG_ID) == 0:
+		while self.baxter.get_ar_pose(TROWEL_AR_TAG_ID) == 0 or self.baxter.get_ar_pose(HOLE_AR_TAG_ID) == 0:
 			self.baxter.rescan()
 		trowel_ar_pose = self.baxter.get_ar_pose(TROWEL_AR_TAG_ID)
 		self.baxter.change_velocity(0.5)
@@ -552,23 +552,12 @@ class GoBears():
 		self.baxter.open_gripper()
 
 	def plant(self):
-		self.baxter.change_velocity(0.75)
+		self.baxter.change_velocity(0.5)
 		self.baxter.move_to_pose(baxter.RESET_POSE, [], "left")
 		self.baxter.rescan()
-		while self.baxter.get_ar_pose(PLANT_AR_TAG_ID) == 0:
+		while self.baxter.get_ar_pose(PLANT_AR_TAG_ID) == 0 or self.baxter.get_ar_pose(HOLE_AR_TAG_ID) == 0:
 			self.baxter.rescan()
-		#Detect location of place to put trowel down
-		# trowel_ar_pose = self.baxter.get_ar_pose(TROWEL_AR_TAG_ID)
 
-		#Compute desired relative final pose with respect to ar tag pose
-		# trowel_pose = trowel_ar_pose
-
-		#Move to pose with orientation constraints
-		# orientation_constraints = []
-		# self.baxter.execute(trowel_pose, orientation_constraints, "left")
-
-		#Release gripper to put down trowel
-		# self.baxter.release_gripper()
 
 		#Detect location of plant 
 		plant_ar_pose = self.baxter.get_ar_pose(PLANT_AR_TAG_ID)
@@ -576,20 +565,14 @@ class GoBears():
 		#Compute desired relative final pose with respect to ar tag pose
 		# plant_pose = self.get_plant_relative_pose(plant_ar_pose)
 		plant_hover_pose = self.get_plant_hover_pose(plant_ar_pose)
+		plant_hover_pose.pose.position.y -= .01
 		orientation_constraints = []
 		self.baxter.move_to_pose(plant_hover_pose, orientation_constraints, "left")
-		# plant_hover_plan = self.baxter.plan(plant_hover_pose, orientation_constraints, "left")
-		# raw_input("Press <Enter> to move the left arm to plant hover pose: ")
-		# self.baxter.execute(plant_hover_plan, "left")
 
 		#Move to pose with orientation constraints
 		plant_pickup_pose = self.get_plant_pickup_pose(plant_ar_pose)
+		plant_pickup_pose.pose.position.y -= .01
 		self.baxter.move_to_pose(plant_pickup_pose, orientation_constraints, "left")
-
-		# plant_pickup_plan = self.baxter.plan(plant_pickup_pose, orientation_constraints, "left")
-		# plant_pickup_plan = self.baxter.move_up(-0.27)
-		# raw_input("Press <Enter> to move the left arm to plant pickup pose: ")
-		# self.baxter.execute(plant_pickup_plan, "left")
 
 		rospy.sleep(1)
 		# Close gripper
@@ -598,9 +581,6 @@ class GoBears():
 		# Move up 
 		self.baxter.move_to_pose(plant_hover_pose, orientation_constraints, "left")
 
-		# plant_hover_plan = self.baxter.plan(plant_hover_pose, orientation_constraints, "left")
-		# raw_input("Press <Enter> to move up: ")
-		# self.baxter.execute(plant_hover_plan, "left")
 
 		hole_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
 		print(hole_ar_pose)
@@ -608,17 +588,12 @@ class GoBears():
 		hole_hover_pose = self.get_hole_hover_pose(hole_ar_pose)
 		orientation_constraints = []
 		self.baxter.move_to_pose(hole_hover_pose, orientation_constraints, "left")
-		# hole_hover_plan = self.baxter.plan(hole_hover_pose, orientation_constraints, "left")
-		# raw_input("Press <Enter> to move the left arm to hole hover pose: ")
-		# self.baxter.execute(hole_hover_plan, "left")
+		
 
 		#Move to pose with orientation constraints
 		hole_release_pose = self.get_hole_release_pose(hole_ar_pose)
 		self.baxter.move_to_pose(hole_release_pose, orientation_constraints, "left")
-		# hole_release_plan = self.baxter.plan(hole_release_pose, orientation_constraints, "left")
-		# plant_pickup_plan = self.baxter.move_up(-0.15)
-		# raw_input("Press <Enter> to move the left arm to hole release pose: ")
-		# self.baxter.execute(hole_release_plan, "left")
+
 
 		rospy.sleep(1)
 		# Open gripper
@@ -631,7 +606,7 @@ class GoBears():
 		water_reset = copy.deepcopy(baxter.RESET_POSE)
 
 		self.baxter.rescan()
-		while self.baxter.get_ar_pose(WATER_AR_TAG_ID) == 0:
+		while self.baxter.get_ar_pose(WATER_AR_TAG_ID) == 0 or self.baxter.get_ar_pose(HOLE_AR_TAG_ID) == 0:
 			self.baxter.rescan()
 
 		water_reset.pose.position.x -= .15
@@ -675,67 +650,19 @@ class GoBears():
 		self.baxter.move_to_pose(water_bin_hover_pose, orientation_constraints, "left")
 
 		tilt_constraint.absolute_y_axis_tolerance = 1.8
-		tilt_constraint.absolute_y_axis_tolerance = .20
+		# tilt_constraint.absolute_z_axis_tolerance = .20
 
 		orientation_constraints = [tilt_constraint]
 		water_bin_water_pose = self.get_water_bin_water_pose(bin_ar_pose)
 		water_bin_water_pose.pose.position.z += 0.05
 		self.baxter.move_to_pose(water_bin_water_pose, orientation_constraints, "left")
+		tilt_constraint.absolute_y_axis_tolerance = .2
 		self.baxter.move_to_pose(water_lift_pose, orientation_constraints, "left")
 
 		self.baxter.move_to_pose(water_pick_pose, orientation_constraints, "left")
 		self.baxter.open_gripper()
 
-		# orientation_constraints = []
-		# water_place_plan = self.baxter.plan(water_place_pose, orientation_constraints, "left")
-		# raw_input("Press <Enter> to move the left arm to water place pose: ")
-		# self.baxter.execute(water_place_plan, "left")
-		# rospy.sleep(1)
-		# #Close gripper to pick up water
-		# self.baxter.close_gripper()
 
-		# # Move up 
-		# water_hover_plan = self.baxter.plan(water_hover_pose, orientation_constraints, "left")
-		# raw_input("Press <Enter> to move up: ")
-		# self.baxter.execute(water_hover_plan, "left")
-
-		# #Detect location of hole
-		# hole_ar_pose = self.baxter.get_ar_pose(HOLE_AR_TAG_ID)
-        # self._group.set_max_velocity_scaling_factor(0.025)
-
-		# #Compute desired relative final pose with respect to hole pose
-		# hole_watering_pose = self.get_hole_watering_pose(hole_ar_pose)
-
-		# #Move to pose with orientation constraints
-		# orientation_constraints = []
-		# hole_watering_plan = self.baxter.plan(hole_watering_pose, orientation_constraints, "left")
-		# raw_input("Press <Enter> to move the left arm to watering pose: ")
-		# self.baxter.execute(hole_watering_plan, "left")
-
-		# #Execute pouring motion
-		# self.baxter.pour()
-
-		# #Move back to water hovering position
-		# # water_ar_pose = self.baxter.get_ar_pose(WATER_AR_TAG_ID)
-		# water_hover_plan = self.baxter.plan(water_hover_pose, orientation_constraints, "left")
-		# raw_input("Press <Enter> to move the left arm to water hover pose: ")
-		# self.baxter.execute(water_hover_plan, "left")
-
-		# #Place water down in original position
-		# water_place_plan = self.baxter.plan(water_place_pose, orientation_constraints, "left")
-		# raw_input("Press <Enter> to move the left arm to water place pose: ")
-		# self.baxter.execute(water_place_plan, "left")
-		# rospy.sleep(1)
-		# #Release gripper to put down watering can
-		# self.baxter.open_gripper()
-
-		# # Move up 
-		# water_hover_plan = self.baxter.plan(water_hover_pose, orientation_constraints, "left")
-		# raw_input("Press <Enter> to move up: ")
-		# self.baxter.execute(water_hover_plan, "left")
-
-		# #Return to a neutral position
-		# self.baxter.reset()
 
 if __name__ == '__main__':
 	gobears = GoBears()
@@ -746,7 +673,7 @@ if __name__ == '__main__':
 	# gobears.test3()
 	# print("Test ended")
 	gobears.dig()
-	# print("Finished digging, now planting")
+	# # print("Finished digging, now planting")
 	gobears.plant()
 	# print("Finished filling now watering")
 	gobears.water()
