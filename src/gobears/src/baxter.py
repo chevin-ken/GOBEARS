@@ -12,14 +12,6 @@ from scipy.spatial.transform import Rotation as R
 import numpy as np
 from moveit_msgs.msg import Constraints, OrientationConstraint
 
-#set_max_velocity_scaling_factor(0.025)
-
-# Open camera(camera is a string and res is a2-elementvector)
-#g_al_setup: transform from ar tag to l gripper at setup stage, before descending
-# G_AL_SETUP = np.array([[ 0.00179543,  0.99388374,  0.11041685, -0.00250071],
-#  [ 0.98573788, -0.02033984,  0.16705428, -0.06594194],
-#  [ 0.16827839,  0.10854214, -0.97974537,  0.03593001],
-#  [ 0.,          0.,          0.,          1.        ]])
 RESET_POSE = PoseStamped()
 RESET_POSE.header.frame_id = "base" 
 RESET_POSE.pose.position.x = 0.730
@@ -31,14 +23,6 @@ G_AL_SETUP = np.array([[-0.02543927,  0.99577036,  0.08828496, -0.02402326],
        [ 0.97391449,  0.00476705,  0.22686526, -0.07992888],
        [ 0.22548485,  0.09175329, -0.96991645,  0.0265129 ],
        [ 0.        ,  0.        ,  0.        ,  1.        ]])
-
-
-
-#g_al_final: transform from ar tag to l gripper at final config (about to close grip)
-# G_AL_FINAL = np.array([[-1.46622016e-02,  9.97445744e-01,  6.99071311e-02, -6.92087378e-05],
-#  [ 9.86086809e-01,  2.84643318e-03,  1.66206805e-01, -6.41808053e-02],
-#  [ 1.65583284e-01,  7.13714576e-02, -9.83609827e-01, -2.28385614e-02],
-#  [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  1.00000000e+00]])
 
 G_AL_FINAL = np.array([[-0.0135772 ,  0.99782634,  0.06448454, -0.01883563],
        [ 0.97529907, -0.0010041 ,  0.2208862 , -0.0659357 ],
@@ -239,15 +223,12 @@ class Baxter:
         self.ar_marker_positions = [0] * len(AR_MARKER_LIST)
 
         self.left_planner = PathPlanner("left_arm")
-        # self.right_planner = PathPlanner("right_arm")
-        # self.setup_left_hand_camera()
 
         rospy.init_node('Baxter')
         # self.remove_table_obstacle()
         self.setup_table_obstacle()
 
         self.scan_again = True
-        # rospy.Subscriber('cameras/left_hand_camera/image', Image, self.left_hand_camera_callback)
         rospy.Subscriber('cameras/right_hand_camera/image', Image, self.camera_callback)
 
         while(self.image == None):
@@ -260,8 +241,6 @@ class Baxter:
 
         self.left_gripper.calibrate()
         rospy.sleep(2.0)
-        # self.left_gripper.open()
-        # rospy.sleep(1.0)
 
         self.bridge = cv_bridge.CvBridge()
         print("Finished init")
@@ -288,21 +267,6 @@ class Baxter:
 
     def change_velocity(self, scaling_factor):
         self.left_planner.change_velocity(scaling_factor)
-
-    def scoop():
-        return
-
-    def pour():
-        return
-
-    def reset():
-        return
-        
-    # def detect_color_object(self, color):  
-    #     head_point, hand_point = self.detector.detect(color)
-    #     head_pose = self.get_head_orientation()
-    #     hand_pose = self.get_hand_orientation()
-    #     return self.calculate_world_frame_coordinates(head_point, head_pose, hand_point, hand_pose)
 
     def plan(self, target, orientation_constraints, arm):
         if arm == "left":
@@ -331,14 +295,9 @@ class Baxter:
             raw_input("Press enter to move to pose")
             success = self.execute(plan, gripper)
 
-    #  TODO: refactor below (or any appropriate) functions to be in a separate file with tools
-    # returns TransformStamped object
     def lookup_transform(self, target_frame, source_frame):
-        #TODO: aren't target and source frame names swapped?
         tfBuffer = tf2_ros.Buffer()
         tfListener = tf2_ros.TransformListener(tfBuffer)
-        # tfListener.waitForTransform(target_frame, source_frame, rospy.Time(), rospy.Duration(4.0))
-        # trans = tfBuffer.lookup_transform(target_frame, source_frame, rospy.Time())
         r = rospy.Rate(10) # 10hz
         done = False
         trans = None
@@ -379,21 +338,7 @@ class Baxter:
         target_pose_stamped = PoseStamped()
         target_pose_stamped.header.frame_id = "base"
         target_pose_stamped.pose = target_pose
-        # orientation_constraint = OrientationConstraint()
-        # orientation_constraint.link_name = "left_gripper"
-        # orientation_constraint.header.frame_id = "base"
-        # orientation_constraint.orientation = current_orientation
-        # orientation_constraint.absolute_x_axis_tolerance = .05
-        # orientation_constraint.absolute_y_axis_tolerance = .05
-        # orientation_constraint.absolute_z_axis_tolerance = .05
         return self.plan(target_pose_stamped, [], "left")
-
-    def move_to_drop_off(self):
-        return
-        # curr_pose = get_current_pose()
-        # target_pose = get_pose_from_ar_tag(deposit_ar_tag)
-        # orientation_constraint = current_orientation
-        # move(curr_pose, target_pose)
             
     def test(self):
         print("Test")
